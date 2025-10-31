@@ -32,6 +32,8 @@
       "target": "json-merge",
       "args": [
         "overlay",
+        "--overlays",
+        "../skyrim-config/Overlays"
       ],
       "configuration": "debug",
       "preLaunchTask": "swift: Build Debug json-merge"

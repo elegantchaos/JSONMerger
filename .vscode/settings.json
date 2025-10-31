@@ -4,5 +4,5 @@
   "editor.formatOnPaste": true,
   "editor.tabSize": 2,
   "editor.useTabStops": false,
-  "explorer.excludeGitIgnore": true
+  "explorer.excludeGitIgnore": false
 }

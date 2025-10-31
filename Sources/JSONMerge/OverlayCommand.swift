@@ -16,26 +16,41 @@ struct OverlayCommand: ParsableCommand {
 
   @Flag() var verbose: Bool = false
   @Option(help: "The output file for the merged JSON.") var output: String?
+  @Option(help: "The overlays directory to apply.") var overlays: String?
 
   mutating func run() throws {
     let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    let overlayURL = cwd.appending(path: "Overlays")
+    let overlaysURL =
+      overlays.map { URL(fileURLWithPath: $0, relativeTo: cwd) }
+      ?? cwd.appending(path: "Overlays")
+
     let outputURL =
       output.map { URL(fileURLWithPath: $0, relativeTo: cwd) } ?? cwd.appending(path: "Output")
 
     try? FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
 
     let overlays = try FileManager.default.contentsOfDirectory(
-      at: overlayURL, includingPropertiesForKeys: [])
+      at: overlaysURL, includingPropertiesForKeys: [])
     for overlayURL in overlays {
       try self.overlay(url: overlayURL, to: outputURL)
     }
   }
 
   func overlay(url: URL, to outputURL: URL) throws {
-    try? FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
 
-    try "TBC".write(to: outputURL, atomically: true, encoding: .utf8)
+    let decoder = JSONDecoder()
+    let configURL = url.appending(path: "config.json")
+    let config = try decoder.decode(OverlayConfig.self, from: Data(contentsOf: configURL))
+
+    let o = outputURL.appending(path: config.output)
+    try? FileManager.default.createDirectory(
+      at: o.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try "TBC".write(to: o, atomically: true, encoding: .utf8)
     print("overlaying \(url.path)")
   }
+}
+
+struct OverlayConfig: Codable {
+  let inputs: [String]
+  let output: String
 }
