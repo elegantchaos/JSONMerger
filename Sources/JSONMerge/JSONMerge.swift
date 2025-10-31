@@ -11,10 +11,27 @@ struct JSONMerge: ParsableCommand {
   @Argument(help: "The JSON files to merge.")
   var files: [String]
 
+  @Flag() var verbose: Bool = false
+  @Flag() var uniqueLists: Bool = false
+
   mutating func run() throws {
-    let merger = JSONMerger()
+    let options = JSONMerger.Options(
+      uniqueLists: uniqueLists,
+      verbose: verbose
+    )
+
+    let merger = JSONMerger(options: options)
+
     let files = self.files.compactMap { try? JSONFile(contentsOf: URL(fileURLWithPath: $0)) }
-    let merged = try merger.merge(files)
-    print(merged.formatted)
+
+    switch files.count {
+    case 0:
+      merger.log("No valid JSON files found.", path: [])
+    case 1:
+      print(files[0].formatted)
+    default:
+      let merged = try merger.merge(files)
+      print(merged.formatted)
+    }
   }
 }

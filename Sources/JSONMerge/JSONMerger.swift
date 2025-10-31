@@ -5,13 +5,16 @@
 
 import Foundation
 
-public struct JSONMerger {
+nonisolated(unsafe) var stderr = StandardError()
 
+public struct JSONMerger {
   public struct Options: Sendable {
     public let uniqueLists: Bool
+    public let verbose: Bool
 
-    public init(uniqueLists: Bool = false) {
+    public init(uniqueLists: Bool = false, verbose: Bool = false) {
       self.uniqueLists = uniqueLists
+      self.verbose = verbose
     }
 
     public static let `default` = Options()
@@ -69,6 +72,8 @@ public struct JSONMerger {
         merged[key] = value
       }
     }
+
+    log("merged dictionaries", path: path)
     return merged
   }
 
@@ -83,6 +88,7 @@ public struct JSONMerger {
       }
     }
 
+    log("merged lists", path: path)
     return original + other
   }
 
@@ -95,6 +101,27 @@ public struct JSONMerger {
         combined.append(item)
       }
     }
+
+    log("uniqued \(T.self) lists", path: path)
     return combined
+  }
+
+  func log(_ message: String, path: [String]) {
+    if options.verbose {
+      if path.isEmpty {
+        print(message, to: &stderr)
+      } else {
+        let pathString = path.joined(separator: ".")
+        print("\(message) [\(pathString)]", to: &stderr)
+      }
+    }
+  }
+}
+
+struct StandardError: TextOutputStream, Sendable {
+  private static let handle = FileHandle.standardError
+
+  public func write(_ string: String) {
+    Self.handle.write(Data(string.utf8))
   }
 }
