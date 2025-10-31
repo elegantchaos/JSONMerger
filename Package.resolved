@@ -1,6 +1,15 @@
 {
-  "originHash" : "d1deff217d8ce31df2cd744a936452caab68ebb6a0087deb3a733b66232c0ae7",
+  "originHash" : "f6332e944113f10ee394324d6c86c003df52eb83a1eef8323a25ffa1c964b91c",
   "pins" : [
+    {
+      "identity" : "matchable",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/elegantchaos/Matchable.git",
+      "state" : {
+        "revision" : "d53e807009960aafbd54f6229c2542f906628b38",
+        "version" : "1.0.7"
+      }
+    },
     {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",

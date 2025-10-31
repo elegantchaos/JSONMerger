@@ -1,4 +1,5 @@
 import JSONMerge
+import Matchable
 import Testing
 
 @Suite struct MergeTests {
@@ -33,6 +34,47 @@ import Testing
           "name" : "Alice"
         }
         """
+    )
+  }
+
+  @Test func testMergeNestedDictionaries() throws {
+    let jsonA = try JSONFile(
+      """
+      {
+        "outer": {
+          "name": "Alice",
+          "age": 30,
+          "city": "New York"
+        }
+      }
+      """
+    )
+
+    let jsonB = try JSONFile(
+      """
+      {
+        "outer": {
+        "age": 31,
+        "country": "USA"
+        }
+      }
+      """
+    )
+
+    let merger = JSONMerger()
+    let merged = try! merger.merge([jsonA, jsonB])
+
+    try merged.formatted.assertMatches(
+      """
+      {
+        "outer" : {
+          "age" : 31,
+          "city" : "New York",
+          "country" : "USA",
+          "name" : "Alice"
+        }
+      }
+      """
     )
   }
 }

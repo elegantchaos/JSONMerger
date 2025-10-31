@@ -17,20 +17,6 @@ public struct JSONObjects {
 
   public var data: [String: Any]
 
-  public mutating func merge(with other: JSONObjects, options: JSONMerger.Options, path: [String]) {
-    for (key, value) in other.data {
-      if let existing = data[key] {
-        data[key] = merge(existing, with: value, options: options, path: path + [key])
-      } else {
-        data[key] = value
-      }
-    }
-  }
-
-  func merge(_ original: Any, with other: Any, options: JSONMerger.Options, path: [String]) -> Any {
-    return other
-  }
-
   public var formatted: String {
     do {
       let jsonData = try JSONSerialization.data(

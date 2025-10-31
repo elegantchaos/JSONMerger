@@ -21,7 +21,7 @@ public struct JSONMerger {
     var merged = JSONObjects([:])
 
     for object in objects {
-      merged.merge(with: object, options: options, path: [])
+      merged = merge(base: merged, with: object, path: [])
     }
 
     return merged
@@ -33,4 +33,35 @@ public struct JSONMerger {
 
     return JSONFile(objects: merged)
   }
+
+  public func merge(
+    base: JSONObjects, with other: JSONObjects, path: [String]
+  ) -> JSONObjects {
+    let merged = merge(dictionary: base.data, with: other.data, path: path)
+    return JSONObjects(merged)
+  }
+
+  func merge(_ original: Any, with other: Any, path: [String]) -> Any {
+    if let d1 = original as? [String: Any], let d2 = other as? [String: Any] {
+      return merge(dictionary: d1, with: d2, path: path)
+    } else {
+      return other
+    }
+  }
+
+  func merge(
+    dictionary original: [String: Any], with other: [String: Any], path: [String]
+  ) -> [String: Any] {
+    var merged = original
+    for (key, value) in other {
+      let newPath = path + [key]
+      if let existing = merged[key] {
+        merged[key] = merge(existing, with: value, path: newPath)
+      } else {
+        merged[key] = value
+      }
+    }
+    return merged
+  }
+
 }
