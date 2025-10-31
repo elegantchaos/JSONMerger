@@ -119,4 +119,45 @@ import Testing
       """
     )
   }
+
+  @Test func testMergeNestedListsUniquing() throws {
+    let jsonA = try JSONFile(
+      """
+      {
+        "other" : "foo",
+        "outer": {
+          "inner": ["foo", "bar"]
+        }
+      }
+      """
+    )
+
+    let jsonB = try JSONFile(
+      """
+      {
+        "outer": {
+        "inner": ["bar", "baz"],
+        }
+      }
+      """
+    )
+
+    let merger = JSONMerger(options: JSONMerger.Options(uniqueLists: true))
+    let merged = try! merger.merge([jsonA, jsonB])
+
+    try merged.formatted.assertMatches(
+      """
+      {
+        "other" : "foo",
+        "outer" : {
+          "inner" : [
+            "foo",
+            "bar",
+            "baz"
+          ]
+        }
+      }
+      """
+    )
+  }
 }

@@ -8,6 +8,12 @@ import Foundation
 public struct JSONMerger {
 
   public struct Options: Sendable {
+    public let uniqueLists: Bool
+
+    public init(uniqueLists: Bool = false) {
+      self.uniqueLists = uniqueLists
+    }
+
     public static let `default` = Options()
   }
 
@@ -67,8 +73,28 @@ public struct JSONMerger {
   }
 
   func merge(list original: [Any], with other: [Any], path: [String]) -> [Any] {
-    var merged = original
-    merged.append(contentsOf: other)
-    return merged
+    if options.uniqueLists {
+      if let s1 = original as? [String], let s2 = other as? [String] {
+        return mergeUnique(list: s1, with: s2, path: path)
+      } else if let n1 = original as? [Int], let n2 = other as? [Int] {
+        return mergeUnique(list: n1, with: n2, path: path)
+      } else if let d1 = original as? [Double], let d2 = other as? [Double] {
+        return mergeUnique(list: d1, with: d2, path: path)
+      }
+    }
+
+    return original + other
+  }
+
+  func mergeUnique<T: Hashable>(list original: [T], with other: [T], path: [String]) -> [T] {
+    var seen = Set(original)
+    var combined = original
+    for item in other {
+      if !seen.contains(item) {
+        seen.insert(item)
+        combined.append(item)
+      }
+    }
+    return combined
   }
 }
