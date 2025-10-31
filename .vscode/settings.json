@@ -1,4 +1,7 @@
 {
+  "swift.actionAfterBuildError": "Do Nothing",
   "editor.formatOnSave": true,
-  "editor.formatOnPaste": true
+  "editor.formatOnPaste": true,
+  "editor.tabSize": 2,
+  "editor.useTabStops": false
 }

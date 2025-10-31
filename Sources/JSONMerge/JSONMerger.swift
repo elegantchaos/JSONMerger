@@ -44,14 +44,16 @@ public struct JSONMerger {
   func merge(_ original: Any, with other: Any, path: [String]) -> Any {
     if let d1 = original as? [String: Any], let d2 = other as? [String: Any] {
       return merge(dictionary: d1, with: d2, path: path)
+    } else if let l1 = original as? [Any], let l2 = other as? [Any] {
+      return merge(list: l1, with: l2, path: path)
     } else {
       return other
     }
   }
 
-  func merge(
-    dictionary original: [String: Any], with other: [String: Any], path: [String]
-  ) -> [String: Any] {
+  func merge(dictionary original: [String: Any], with other: [String: Any], path: [String])
+    -> [String: Any]
+  {
     var merged = original
     for (key, value) in other {
       let newPath = path + [key]
@@ -64,4 +66,9 @@ public struct JSONMerger {
     return merged
   }
 
+  func merge(list original: [Any], with other: [Any], path: [String]) -> [Any] {
+    var merged = original
+    merged.append(contentsOf: other)
+    return merged
+  }
 }
