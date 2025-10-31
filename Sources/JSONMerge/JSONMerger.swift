@@ -5,9 +5,9 @@
 
 import Foundation
 
-struct JSONMerger {
+public struct JSONMerger {
 
-  public struct Options {
+  public struct Options: Sendable {
     public static let `default` = Options()
   }
 
@@ -17,7 +17,7 @@ struct JSONMerger {
     self.options = options
   }
 
-  func merge(objects: [JSONObjects]) throws -> JSONObjects {
+  public func merge(objects: [JSONObjects]) throws -> JSONObjects {
     var merged = JSONObjects([:])
 
     for object in objects {
@@ -27,17 +27,7 @@ struct JSONMerger {
     return merged
   }
 
-  func merge(base: [String: Any], override: [String: Any]) throws -> [String: Any] {
-    var merged = base
-
-    for (key, value) in override {
-      merged[key] = value
-    }
-
-    return merged
-  }
-
-  func merge(_ files: [JSONFile]) throws -> JSONFile {
+  public func merge(_ files: [JSONFile]) throws -> JSONFile {
     let objects = files.map(\.objects)
     let merged = try merge(objects: objects)
 

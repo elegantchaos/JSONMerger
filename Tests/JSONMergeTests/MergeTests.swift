@@ -2,8 +2,8 @@ import JSONMerge
 import Testing
 
 @Suite struct MergeTests {
-  @Test func testMergeDictionaries() {
-    let jsonA = JSONFile(
+  @Test func testMergeDictionaries() throws {
+    let jsonA = try JSONFile(
       """
       {
         "name": "Alice",
@@ -13,7 +13,7 @@ import Testing
       """
     )
 
-    let jsonB = JSONFile(
+    let jsonB = try JSONFile(
       """
       {
         "age": 31,
@@ -22,7 +22,17 @@ import Testing
       """)
 
     let merger = JSONMerger()
+    let merged = try! merger.merge([jsonA, jsonB])
 
-    let mergedData = try! merger.merge([jsonA.data, jsonB.data])
+    #expect(
+      merged.formatted == """
+        {
+          "age" : 31,
+          "city" : "New York",
+          "country" : "USA",
+          "name" : "Alice"
+        }
+        """
+    )
   }
 }

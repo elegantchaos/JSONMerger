@@ -22,4 +22,15 @@ public struct JSONObjects {
       data[key] = value
     }
   }
+
+  public var formatted: String {
+    do {
+      let jsonData = try JSONSerialization.data(
+        withJSONObject: data,
+        options: [.prettyPrinted, .sortedKeys])
+      return String(data: jsonData, encoding: .utf8) ?? "{}"
+    } catch {
+      return "{}"
+    }
+  }
 }
