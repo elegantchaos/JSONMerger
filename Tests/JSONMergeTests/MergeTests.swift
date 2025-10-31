@@ -160,4 +160,46 @@ import Testing
       """
     )
   }
+
+  @Test func testMergeListsDifferentTypes() throws {
+    let jsonA = try JSONFile(
+      """
+      {
+        "other" : "foo",
+        "outer": {
+          "inner": ["foo", "bar"]
+        }
+      }
+      """
+    )
+
+    let jsonB = try JSONFile(
+      """
+      {
+        "outer": {
+        "inner": [1, 2],
+        }
+      }
+      """
+    )
+
+    let merger = JSONMerger()
+    let merged = try! merger.merge([jsonA, jsonB])
+
+    try merged.formatted.assertMatches(
+      """
+      {
+        "other" : "foo",
+        "outer" : {
+          "inner" : [
+            "foo",
+            "bar",
+            1,
+            2
+          ]
+        }
+      }
+      """
+    )
+  }
 }

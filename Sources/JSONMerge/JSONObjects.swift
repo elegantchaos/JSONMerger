@@ -21,7 +21,7 @@ public struct JSONObjects {
     do {
       let jsonData = try JSONSerialization.data(
         withJSONObject: data,
-        options: [.prettyPrinted, .sortedKeys])
+        options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
       return String(data: jsonData, encoding: .utf8) ?? "{}"
     } catch {
       return "{}"
