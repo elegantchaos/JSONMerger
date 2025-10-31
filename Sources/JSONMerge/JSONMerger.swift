@@ -21,7 +21,7 @@ public struct JSONMerger {
     var merged = JSONObjects([:])
 
     for object in objects {
-      merged.merge(with: object, options: options)
+      merged.merge(with: object, options: options, path: [])
     }
 
     return merged
@@ -31,6 +31,6 @@ public struct JSONMerger {
     let objects = files.map(\.objects)
     let merged = try merge(objects: objects)
 
-    return try! JSONFile(objects: merged)
+    return JSONFile(objects: merged)
   }
 }
