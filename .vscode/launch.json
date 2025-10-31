@@ -19,6 +19,26 @@
       "target": "JSONMerge",
       "configuration": "release",
       "preLaunchTask": "swift: Build Release JSONMerge"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:JSONMerge}",
+      "name": "Debug json-merge",
+      "target": "json-merge",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug json-merge"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:JSONMerge}",
+      "name": "Release json-merge",
+      "target": "json-merge",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release json-merge"
     }
   ]
 }
