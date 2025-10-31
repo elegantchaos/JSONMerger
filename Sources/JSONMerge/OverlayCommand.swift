@@ -14,12 +14,28 @@ struct OverlayCommand: ParsableCommand {
     )
   }
 
-  @Argument(help: "The JSON files to overlay.")
-  var files: [String]
-
   @Flag() var verbose: Bool = false
+  @Option(help: "The output file for the merged JSON.") var output: String?
 
   mutating func run() throws {
-    print("to do")
+    let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let overlayURL = cwd.appending(path: "Overlays")
+    let outputURL =
+      output.map { URL(fileURLWithPath: $0, relativeTo: cwd) } ?? cwd.appending(path: "Output")
+
+    try? FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
+
+    let overlays = try FileManager.default.contentsOfDirectory(
+      at: overlayURL, includingPropertiesForKeys: [])
+    for overlayURL in overlays {
+      try self.overlay(url: overlayURL, to: outputURL)
+    }
+  }
+
+  func overlay(url: URL, to outputURL: URL) throws {
+    try? FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
+
+    try "TBC".write(to: outputURL, atomically: true, encoding: .utf8)
+    print("overlaying \(url.path)")
   }
 }

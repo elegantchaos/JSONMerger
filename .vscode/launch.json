@@ -32,8 +32,6 @@
       "target": "json-merge",
       "args": [
         "overlay",
-        "Tests/JSONMerge/Resources/sample1.json",
-        "Tests/JSONMerge/Resources/sample2.json"
       ],
       "configuration": "debug",
       "preLaunchTask": "swift: Build Debug json-merge"
