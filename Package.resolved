@@ -1,6 +1,24 @@
 {
-  "originHash" : "f6332e944113f10ee394324d6c86c003df52eb83a1eef8323a25ffa1c964b91c",
+  "originHash" : "46f689c425a59d5144b3e5e29784100b56ef8f75f53b8231aa7c990c9461cc7a",
   "pins" : [
+    {
+      "identity" : "chaosbytestreams",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/elegantchaos/ChaosByteStreams",
+      "state" : {
+        "revision" : "01cc58b8d9a01d67ee6669b67db41b2060ea467b",
+        "version" : "1.0.7"
+      }
+    },
+    {
+      "identity" : "logger",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/elegantchaos/Logger.git",
+      "state" : {
+        "revision" : "6957a21c4e02fc03734a460fb8bfcd36dbe8aba8",
+        "version" : "2.0.1"
+      }
+    },
     {
       "identity" : "matchable",
       "kind" : "remoteSourceControl",
@@ -11,12 +29,30 @@
       }
     },
     {
+      "identity" : "runner",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/elegantchaos/Runner.git",
+      "state" : {
+        "revision" : "ba4b7d5b995d33c82fc1aa51054202caf0aa7297",
+        "version" : "2.1.5"
+      }
+    },
+    {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
         "revision" : "cdd0ef3755280949551dc26dee5de9ddeda89f54",
         "version" : "1.6.2"
+      }
+    },
+    {
+      "identity" : "versionator",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/elegantchaos/Versionator.git",
+      "state" : {
+        "revision" : "ea5bf22cecbc68b889b49ac35a8a9aaf7bdbed72",
+        "version" : "2.0.7"
       }
     }
   ],

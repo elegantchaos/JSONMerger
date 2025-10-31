@@ -6,8 +6,14 @@
 import ArgumentParser
 import Foundation
 
-@main
-struct JSONMerge: ParsableCommand {
+struct MergeCommand: ParsableCommand {
+  static var configuration: CommandConfiguration {
+    CommandConfiguration(
+      commandName: "merge",
+      abstract: "Merge multiple JSON files."
+    )
+  }
+
   @Argument(help: "The JSON files to merge.")
   var files: [String]
 

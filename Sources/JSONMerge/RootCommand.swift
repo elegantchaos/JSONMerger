@@ -1,0 +1,58 @@
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//  Created by Sam Deane on 11/10/2018.
+//  All code (c) 2018 - present day, Elegant Chaos Limited.
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+import ArgumentParser
+import Foundation
+import Logger
+
+/// Root command that's run if no subcommand is specified.
+///
+/// Handles the `--version` flag, or shows the help if no arguments are provided.
+@main
+struct RootCommand: AsyncParsableCommand {
+  static var configuration: CommandConfiguration {
+    CommandConfiguration(
+      commandName: "json-merge",
+      abstract: "Assorted tools for merging configuration files.",
+      subcommands: [
+        MergeCommand.self
+      ]
+    )
+  }
+
+  @Flag(help: "Show the version.") var version = false
+
+  mutating func run() async throws {
+    if version {
+      let string =
+        VersionatorVersion.git.contains("-0-") ? VersionatorVersion.full : VersionatorVersion.git
+      print("\(Self.configuration.commandName!) \(string)")
+    } else {
+      throw CleanExit.helpRequest(self)
+    }
+  }
+
+  /// Main entrypoint.
+  /// Note that this is overridden from the default implementation in `AsyncParsableCommand`,
+  /// to allow us to flush the log after running the command.
+  public static func main(_ arguments: [String]?) async {
+    do {
+      var command = try parseAsRoot(arguments)
+      if var asyncCommand = command as? AsyncParsableCommand {
+        try await asyncCommand.run()
+      } else {
+        try command.run()
+      }
+      await Manager.shared.shutdown()
+    } catch {
+      await Manager.shared.shutdown()
+      exit(withError: error)
+    }
+  }
+
+  /// Error label - adds some extra newlines to separate the error message from the rest of the output.
+  public static var _errorLabel: String { "\n\nError" }
+
+}

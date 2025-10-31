@@ -24,13 +24,19 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
     .package(url: "https://github.com/elegantchaos/Matchable.git", from: "1.0.0"),
+    .package(url: "https://github.com/elegantchaos/Logger.git", from: "2.0.0"),
+    .package(url: "https://github.com/elegantchaos/Versionator.git", from: "2.0.3"),
   ],
 
   targets: [
     .executableTarget(
       name: "JSONMerge",
       dependencies: [
-        .product(name: "ArgumentParser", package: "swift-argument-parser")
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        .product(name: "Logger", package: "Logger"),
+      ],
+      plugins: [
+        .plugin(name: "VersionatorPlugin", package: "Versionator")
       ]
     ),
     .testTarget(
