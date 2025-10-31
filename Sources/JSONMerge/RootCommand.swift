@@ -17,7 +17,8 @@ struct RootCommand: AsyncParsableCommand {
       commandName: "json-merge",
       abstract: "Assorted tools for merging configuration files.",
       subcommands: [
-        MergeCommand.self
+        MergeCommand.self,
+        OverlayCommand.self,
       ]
     )
   }

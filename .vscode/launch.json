@@ -3,30 +3,38 @@
     {
       "type": "swift",
       "request": "launch",
-      "args": [],
+      "args": [
+        "merge"
+      ],
       "cwd": "${workspaceFolder:JSONMerge}",
-      "name": "Debug JSONMerge",
-      "target": "JSONMerge",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug JSONMerge"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:JSONMerge}",
-      "name": "Release JSONMerge",
-      "target": "JSONMerge",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release JSONMerge"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:JSONMerge}",
-      "name": "Debug json-merge",
+      "name": "Debug merge",
       "target": "json-merge",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug json-merge"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [
+        "--version"
+      ],
+      "cwd": "${workspaceFolder:JSONMerge}",
+      "name": "Debug version",
+      "target": "json-merge",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug json-merge"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "cwd": "${workspaceFolder:JSONMerge}",
+      "name": "Debug overlay",
+      "target": "json-merge",
+      "args": [
+        "overlay",
+        "Tests/JSONMerge/Resources/sample1.json",
+        "Tests/JSONMerge/Resources/sample2.json"
+      ],
       "configuration": "debug",
       "preLaunchTask": "swift: Build Debug json-merge"
     },
