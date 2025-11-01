@@ -63,6 +63,7 @@ struct OverlayCommand: ParsableCommand {
       let outputURL = outputRoot.appending(path: config.to).appending(
         path: inputURL.lastPathComponent)
       try inputURL.copy(to: outputURL)
+      print("moved \(inputURL.lastPathComponent) to \(outputURL.lastPathComponent)")
     }
   }
 
@@ -70,6 +71,7 @@ struct OverlayCommand: ParsableCommand {
     let inputURL = root.appending(path: config.from)
     let destination = outputURL.appending(path: config.to)
     try inputURL.copy(to: destination)
+    print("copied \(inputURL.lastPathComponent) to \(destination.lastPathComponent)")
   }
 
   func merge(_ config: GroupConfig, at root: URL, to outputURL: URL) throws {
@@ -80,6 +82,7 @@ struct OverlayCommand: ParsableCommand {
     let merged = try merger.merge(inputs)
     let mergedURL = outputURL.appending(path: config.to)
     try merged.formatted.write(to: mergedURL)
+    print("merged \(config.from.count) files to \(mergedURL.lastPathComponent)")
   }
 }
 

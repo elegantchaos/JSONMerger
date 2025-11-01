@@ -9,10 +9,7 @@
 			],
 			"env": {},
 			"disableTaskQueue": true,
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
+			"group": "build",
 			"problemMatcher": [],
 			"label": "swift: Build All",
 			"detail": "swift build --build-tests"
