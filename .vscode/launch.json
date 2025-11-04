@@ -33,6 +33,24 @@
     {
       "type": "swift",
       "request": "launch",
+      "name": "Debug mods",
+      "target": "json-merge",
+      "args": [
+        "mods",
+        "--verbose",
+        "--mods-path",
+        "${workspaceFolder}/../skyrim-config/mods.json",
+        "--rsv-output-path",
+        "../skyrim-config/Overlays/RSV/RSVScorpioMods_DISTR.ini",
+        "--obody-output-path",
+        "../skyrim-config/Overlays/OBody/mods.json"
+      ],
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build All"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
       "args": [
         "--version"
       ],

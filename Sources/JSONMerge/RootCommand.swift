@@ -18,7 +18,8 @@ struct RootCommand: AsyncParsableCommand {
       subcommands: [
         MergeCommand.self,
         OverlayCommand.self,
-        NPCCommand.self,
+        NPCSCommand.self,
+        ModsCommand.self,
       ]
     )
   }

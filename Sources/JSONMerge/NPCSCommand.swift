@@ -6,7 +6,7 @@
 import ArgumentParser
 import Foundation
 
-struct NPCCommand: ParsableCommand {
+struct NPCSCommand: ParsableCommand {
   static var configuration: CommandConfiguration {
     CommandConfiguration(
       commandName: "npcs",
