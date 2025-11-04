@@ -6,11 +6,25 @@
       "args": [
         "merge"
       ],
-      "cwd": "${workspaceFolder:JSONMerge}",
+      "cwd": "${workspaceFolder:JSONMerger}",
       "name": "Debug merge",
       "target": "json-merge",
       "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug json-merge"
+      "preLaunchTask": "swift: Build All"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "name": "Debug npcs",
+      "target": "json-merge",
+      "args": [
+        "npcs",
+        "--verbose",
+        "--npcs-path",
+        "${workspaceFolder}/../skyrim-config/npcs.json"
+      ],
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build All"
     },
     {
       "type": "swift",
@@ -18,7 +32,7 @@
       "args": [
         "--version"
       ],
-      "cwd": "${workspaceFolder:JSONMerge}",
+      "cwd": "${workspaceFolder:JSONMerger}",
       "name": "Debug version",
       "target": "json-merge",
       "configuration": "debug",
@@ -27,7 +41,7 @@
     {
       "type": "swift",
       "request": "launch",
-      "cwd": "${workspaceFolder:JSONMerge}",
+      "cwd": "${workspaceFolder:JSONMerger}",
       "name": "Debug overlay",
       "target": "json-merge",
       "args": [
