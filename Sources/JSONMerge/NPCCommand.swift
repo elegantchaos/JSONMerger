@@ -40,8 +40,8 @@ struct NPCCommand: ParsableCommand {
           continue
         }
 
-        if npc.skipOBody != false {
-          obodyIds.append(npcID)
+        if npc.skipOBody != false, let name = npc.name {
+          obodyIds.append(name)
         }
         if npc.skipRSV != false {
           rsvIds.append(npcID)
@@ -81,7 +81,7 @@ struct NPCCommand: ParsableCommand {
       let ini = """
         {
             "blacklistedNpcs" : [\(ids)
-            ],
+            ]
         }
         """
 
