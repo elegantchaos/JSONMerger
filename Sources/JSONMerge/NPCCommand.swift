@@ -35,10 +35,15 @@ struct NPCCommand: ParsableCommand {
       var obodyIds: [String] = []
       var rsvIds: [String] = []
       for (npcID, npc) in npcs {
-        if let skip = npc.skipOBody, skip {
+        if npcID.split(separator: " ").count > 1 {
+          print("Invalid NPC ID '\(npcID)' - contains spaces, skipping")
+          continue
+        }
+
+        if npc.skipOBody != false {
           obodyIds.append(npcID)
         }
-        if let skip = npc.skipRSV, skip {
+        if npc.skipRSV != false {
           rsvIds.append(npcID)
         }
       }
