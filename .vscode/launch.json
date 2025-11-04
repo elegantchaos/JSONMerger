@@ -21,7 +21,11 @@
         "npcs",
         "--verbose",
         "--npcs-path",
-        "${workspaceFolder}/../skyrim-config/npcs.json"
+        "${workspaceFolder}/../skyrim-config/npcs.json",
+        "--rsv-output-path",
+        "../skyrim-config/Overlays/RSV/RSVScorpioNPC_DISTR.ini",
+        "--obody-output-path",
+        "../skyrim-config/Overlays/OBody/npcs.json"
       ],
       "configuration": "debug",
       "preLaunchTask": "swift: Build All"
@@ -47,7 +51,7 @@
       "args": [
         "overlay",
         "--overlays",
-        "../skyrim-config/Overlays"
+        "../skyrim-config/Overlays",
       ],
       "configuration": "debug",
       "preLaunchTask": "swift: Build Debug json-merge"

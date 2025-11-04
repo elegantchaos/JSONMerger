@@ -16,6 +16,8 @@ struct NPCCommand: ParsableCommand {
 
   @Flag() var verbose: Bool = false
   @Option(help: "Path to a JSON file containing NPC data.") var npcsPath: String?
+  @Option(help: "Path to the output .json file for RSV data.") var rsvOutputPath: String?
+  @Option(help: "Path to the output .ini for OBody data.") var obodyOutputPath: String?
 
   mutating func run() throws {
     let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -30,10 +32,58 @@ struct NPCCommand: ParsableCommand {
     }
 
     func process(npcs: [String: NPCRecord]) {
+      var obodyIds: [String] = []
+      var rsvIds: [String] = []
       for (npcID, npc) in npcs {
-        if verbose {
-          print("Processing NPC: \(npc.name ?? npcID)")
+        if let skip = npc.skipOBody, skip {
+          obodyIds.append(npcID)
         }
+        if let skip = npc.skipRSV, skip {
+          rsvIds.append(npcID)
+        }
+      }
+
+      if let outputURL = obodyOutputPath.map({ URL(fileURLWithPath: $0, relativeTo: cwd) }) {
+        processOBody(idList: obodyIds, to: outputURL)
+      }
+
+      if let outputURL = rsvOutputPath.map({ URL(fileURLWithPath: $0, relativeTo: cwd) }) {
+        processRSV(idList: rsvIds, to: outputURL)
+      }
+    }
+
+    func processRSV(idList: [String], to url: URL) {
+      let ids = idList.joined(separator: ",")
+      let ini = """
+        Keyword = RSVignore|\(ids)
+        Keyword = RSVignoreTeeth|\(ids)
+        """
+
+      do {
+        try ini.write(to: url)
+      } catch {
+        print("Error writing RSV INI file: \(error)")
+      }
+    }
+
+    func processOBody(idList: [String], to url: URL) {
+      let ids =
+        idList
+        .sorted()
+        .map { "\n      \"\($0)\"" }
+        .joined(separator: ",")
+
+      let ini = """
+        {
+            "blacklistedNpcs" : [\(ids)
+            ],
+        }
+        """
+
+      do {
+        try ini.write(to: url)
+      } catch {
+        print("Error writing OBody INI file: \(error)")
       }
     }
   }
