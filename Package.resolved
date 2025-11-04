@@ -1,24 +1,6 @@
 {
-  "originHash" : "46f689c425a59d5144b3e5e29784100b56ef8f75f53b8231aa7c990c9461cc7a",
+  "originHash" : "cd68ad2f651289592b7551cfb49022c403694460ef04cba24260d36da4093fc5",
   "pins" : [
-    {
-      "identity" : "chaosbytestreams",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/elegantchaos/ChaosByteStreams",
-      "state" : {
-        "revision" : "01cc58b8d9a01d67ee6669b67db41b2060ea467b",
-        "version" : "1.0.7"
-      }
-    },
-    {
-      "identity" : "logger",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/elegantchaos/Logger.git",
-      "state" : {
-        "revision" : "6957a21c4e02fc03734a460fb8bfcd36dbe8aba8",
-        "version" : "2.0.1"
-      }
-    },
     {
       "identity" : "matchable",
       "kind" : "remoteSourceControl",
@@ -26,15 +8,6 @@
       "state" : {
         "revision" : "d53e807009960aafbd54f6229c2542f906628b38",
         "version" : "1.0.7"
-      }
-    },
-    {
-      "identity" : "runner",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/elegantchaos/Runner.git",
-      "state" : {
-        "revision" : "ba4b7d5b995d33c82fc1aa51054202caf0aa7297",
-        "version" : "2.1.5"
       }
     },
     {
@@ -47,12 +20,30 @@
       }
     },
     {
+      "identity" : "swift-subprocess",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-subprocess.git",
+      "state" : {
+        "revision" : "44922dfe46380cd354ca4b0208e717a3e92b13dd",
+        "version" : "0.2.1"
+      }
+    },
+    {
+      "identity" : "swift-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-system",
+      "state" : {
+        "revision" : "395a77f0aa927f0ff73941d7ac35f2b46d47c9db",
+        "version" : "1.6.3"
+      }
+    },
+    {
       "identity" : "versionator",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/elegantchaos/Versionator.git",
       "state" : {
-        "revision" : "ea5bf22cecbc68b889b49ac35a8a9aaf7bdbed72",
-        "version" : "2.0.7"
+        "revision" : "08494f15bafcda943c0c13a80b81307a910bbc01",
+        "version" : "2.1.0"
       }
     }
   ],

@@ -5,7 +5,6 @@
 
 import ArgumentParser
 import Foundation
-import Logger
 
 /// Root command that's run if no subcommand is specified.
 ///
@@ -32,24 +31,6 @@ struct RootCommand: AsyncParsableCommand {
       print("\(Self.configuration.commandName!) \(string)")
     } else {
       throw CleanExit.helpRequest(self)
-    }
-  }
-
-  /// Main entrypoint.
-  /// Note that this is overridden from the default implementation in `AsyncParsableCommand`,
-  /// to allow us to flush the log after running the command.
-  public static func main(_ arguments: [String]?) async {
-    do {
-      var command = try parseAsRoot(arguments)
-      if var asyncCommand = command as? AsyncParsableCommand {
-        try await asyncCommand.run()
-      } else {
-        try command.run()
-      }
-      await Manager.shared.shutdown()
-    } catch {
-      await Manager.shared.shutdown()
-      exit(withError: error)
     }
   }
 

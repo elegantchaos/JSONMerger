@@ -11,7 +11,7 @@ let package = Package(
   name: "JSONMerge",
 
   platforms: [
-    .macOS(.v15)
+    .macOS(.v26)
   ],
 
   products: [
@@ -24,16 +24,14 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
     .package(url: "https://github.com/elegantchaos/Matchable.git", from: "1.0.0"),
-    .package(url: "https://github.com/elegantchaos/Logger.git", from: "2.0.0"),
-    .package(url: "https://github.com/elegantchaos/Versionator.git", from: "2.0.3"),
+    .package(url: "https://github.com/elegantchaos/Versionator.git", from: "2.1.0"),
   ],
 
   targets: [
     .executableTarget(
       name: "JSONMerge",
       dependencies: [
-        .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        .product(name: "Logger", package: "Logger"),
+        .product(name: "ArgumentParser", package: "swift-argument-parser")
       ],
       plugins: [
         .plugin(name: "VersionatorPlugin", package: "Versionator")
