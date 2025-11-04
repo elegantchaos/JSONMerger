@@ -3,18 +3,6 @@
     {
       "type": "swift",
       "request": "launch",
-      "args": [
-        "merge"
-      ],
-      "cwd": "${workspaceFolder:JSONMerger}",
-      "name": "Debug merge",
-      "target": "json-merge",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build All"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
       "name": "Debug npcs",
       "target": "json-merge",
       "args": [
