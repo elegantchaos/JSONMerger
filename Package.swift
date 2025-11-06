@@ -28,10 +28,15 @@ let package = Package(
   ],
 
   targets: [
+    .target(
+      name: "DictionaryMerger"
+    ),
+
     .executableTarget(
       name: "JSONMerge",
       dependencies: [
-        .product(name: "ArgumentParser", package: "swift-argument-parser")
+        "DictionaryMerger",
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ],
       plugins: [
         .plugin(name: "VersionatorPlugin", package: "Versionator")
@@ -41,6 +46,13 @@ let package = Package(
       name: "JSONMergeTests",
       dependencies: [
         "JSONMerge",
+        .product(name: "Matchable", package: "Matchable"),
+      ]
+    ),
+    .testTarget(
+      name: "DictionaryMergerTests",
+      dependencies: [
+        "DictionaryMerger",
         .product(name: "Matchable", package: "Matchable"),
       ]
     ),
