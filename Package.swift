@@ -8,7 +8,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "JSONMerge",
+  name: "skyrim-tools",
 
   platforms: [
     .macOS(.v26)
@@ -42,6 +42,7 @@ let package = Package(
         .plugin(name: "VersionatorPlugin", package: "Versionator")
       ]
     ),
+
     .testTarget(
       name: "SkyrimToolsTests",
       dependencies: [
@@ -49,6 +50,7 @@ let package = Package(
         .product(name: "Matchable", package: "Matchable"),
       ]
     ),
+
     .testTarget(
       name: "DictionaryMergerTests",
       dependencies: [

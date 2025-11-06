@@ -1,9 +1,9 @@
 import DictionaryMerger
-import JSONMerge
 import Matchable
+import SkyrimTools
 import Testing
 
-@Suite struct JSONMergeTests {
+@Suite struct SkyrimToolsTests {
   @Test func testMergeDictionaries() throws {
     let jsonA = try JSONFile(
       """

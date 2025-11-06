@@ -3,8 +3,26 @@
     {
       "type": "swift",
       "request": "launch",
+      "name": "Debug sleep",
+      "target": "skyrim-tools",
+      "args": [
+        "sleep",
+        "--verbose",
+        "--npcs-path",
+        "${workspaceFolder}/../skyrim-config/npcs.json",
+        "--rsv-output-path",
+        "../skyrim-config/Overlays/RSV/RSVScorpioNPC_DISTR.ini",
+        "--obody-output-path",
+        "../skyrim-config/Overlays/OBody/npcs.json"
+      ],
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build All"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
       "name": "Debug npcs",
-      "target": "json-merge",
+      "target": "skyrim-tools",
       "args": [
         "npcs",
         "--verbose",
@@ -22,7 +40,7 @@
       "type": "swift",
       "request": "launch",
       "name": "Debug mods",
-      "target": "json-merge",
+      "target": "skyrim-tools",
       "args": [
         "mods",
         "--verbose",
@@ -36,51 +54,5 @@
       "configuration": "debug",
       "preLaunchTask": "swift: Build All"
     },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [
-        "--version"
-      ],
-      "cwd": "${workspaceFolder:JSONMerger}",
-      "name": "Debug version",
-      "target": "json-merge",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug json-merge"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "cwd": "${workspaceFolder:JSONMerger}",
-      "name": "Debug overlay",
-      "target": "json-merge",
-      "args": [
-        "overlay",
-        "--overlays",
-        "../skyrim-config/Overlays",
-      ],
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug json-merge"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:JSONMerge}",
-      "name": "Release json-merge",
-      "target": "json-merge",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release json-merge"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:JSONMerge}",
-      "name": "Debug json-merge",
-      "target": "json-merge",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug json-merge"
-    }
   ]
 }

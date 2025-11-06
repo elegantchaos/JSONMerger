@@ -17,9 +17,10 @@ struct RootCommand: AsyncParsableCommand {
       abstract: "Assorted tools for merging configuration files.",
       subcommands: [
         MergeCommand.self,
-        OverlayCommand.self,
-        NPCSCommand.self,
         ModsCommand.self,
+        NPCSCommand.self,
+        OverlayCommand.self,
+        SleepCommand.self,
       ]
     )
   }
