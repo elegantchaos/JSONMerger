@@ -1,7 +1,8 @@
 import Foundation
+import DictionaryMerger
 
 public struct JSONObjects {
-  public init(_ data: [String: Any]) {
+  public init(_ data: DictionaryMerger.Item) {
     self.data = data
   }
 
@@ -15,7 +16,7 @@ public struct JSONObjects {
     self.data = dictionary
   }
 
-  public var data: [String: Any]
+  public var data: DictionaryMerger.Item
 
   public var formatted: String {
     do {

@@ -4,9 +4,10 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import ArgumentParser
+import DictionaryMerger
 import Foundation
 
-struct MergeCommand: ParsableCommand {
+struct MergeCommand: LoggableCommand {
   static var configuration: CommandConfiguration {
     CommandConfiguration(
       commandName: "merge",
@@ -21,7 +22,7 @@ struct MergeCommand: ParsableCommand {
   @Flag() var uniqueLists: Bool = false
 
   mutating func run() throws {
-    let options = JSONMerger.Options(
+    let options = DictionaryMerger.Options(
       uniqueLists: uniqueLists,
       verbose: verbose
     )
@@ -32,7 +33,7 @@ struct MergeCommand: ParsableCommand {
 
     switch files.count {
     case 0:
-      merger.log("No valid JSON files found.", path: [])
+      log("No valid JSON files found.", path: [])
     case 1:
       print(files[0].formatted)
     default:
@@ -40,4 +41,5 @@ struct MergeCommand: ParsableCommand {
       print(merged.formatted)
     }
   }
+
 }

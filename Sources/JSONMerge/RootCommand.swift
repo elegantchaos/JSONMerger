@@ -40,3 +40,20 @@ struct RootCommand: AsyncParsableCommand {
   public static var _errorLabel: String { "\n\nError" }
 
 }
+
+protocol LoggableCommand: AsyncParsableCommand {
+  var verbose: Bool { get }
+}
+
+extension LoggableCommand {
+  func log(_ message: String, path: [String] = []) {
+    if verbose {
+      if path.isEmpty {
+        print(message, to: &stderr)
+      } else {
+        let pathString = path.joined(separator: ".")
+        print("\(message) [\(pathString)]", to: &stderr)
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@ import DictionaryMerger
 import Matchable
 import Testing
 
-@Suite struct MergeTests {
+@Suite struct DictionaryMergeTests {
   @Test func testMergeDictionaries() throws {
     let itemA: DictionaryMerger.Item = [
       "name": "Alice",

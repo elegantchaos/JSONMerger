@@ -3,37 +3,22 @@
 //  All code (c) 2025 - present day, Elegant Chaos Limited.
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+import DictionaryMerger
 import Foundation
 
 nonisolated(unsafe) var stderr = StandardError()
 
 public struct JSONMerger {
-  public struct Options: Sendable {
-    public let uniqueLists: Bool
-    public let verbose: Bool
+  public let options: DictionaryMerger.Options
 
-    public init(uniqueLists: Bool = false, verbose: Bool = false) {
-      self.uniqueLists = uniqueLists
-      self.verbose = verbose
-    }
-
-    public static let `default` = Options()
-  }
-
-  public let options: Options
-
-  public init(options: Options = .default) {
+  public init(options: DictionaryMerger.Options = .default) {
     self.options = options
   }
 
   public func merge(objects: [JSONObjects]) throws -> JSONObjects {
-    var merged = JSONObjects([:])
-
-    for object in objects {
-      merged = merge(base: merged, with: object, path: [])
-    }
-
-    return merged
+    let merger = DictionaryMerger(options: options)
+    let merged = try merger.merge(objects.map(\.data))
+    return JSONObjects(merged)
   }
 
   public func merge(_ files: [JSONFile]) throws -> JSONFile {
@@ -41,80 +26,6 @@ public struct JSONMerger {
     let merged = try merge(objects: objects)
 
     return JSONFile(objects: merged)
-  }
-
-  public func merge(
-    base: JSONObjects, with other: JSONObjects, path: [String]
-  ) -> JSONObjects {
-    let merged = merge(dictionary: base.data, with: other.data, path: path)
-    return JSONObjects(merged)
-  }
-
-  func merge(_ original: Any, with other: Any, path: [String]) -> Any {
-    if let d1 = original as? [String: Any], let d2 = other as? [String: Any] {
-      return merge(dictionary: d1, with: d2, path: path)
-    } else if let l1 = original as? [Any], let l2 = other as? [Any] {
-      return merge(list: l1, with: l2, path: path)
-    } else {
-      return other
-    }
-  }
-
-  func merge(dictionary original: [String: Any], with other: [String: Any], path: [String])
-    -> [String: Any]
-  {
-    var merged = original
-    for (key, value) in other {
-      let newPath = path + [key]
-      if let existing = merged[key] {
-        merged[key] = merge(existing, with: value, path: newPath)
-      } else {
-        merged[key] = value
-      }
-    }
-
-    log("merged dictionaries", path: path)
-    return merged
-  }
-
-  func merge(list original: [Any], with other: [Any], path: [String]) -> [Any] {
-    if options.uniqueLists {
-      if let s1 = original as? [String], let s2 = other as? [String] {
-        return mergeUnique(list: s1, with: s2, path: path)
-      } else if let n1 = original as? [Int], let n2 = other as? [Int] {
-        return mergeUnique(list: n1, with: n2, path: path)
-      } else if let d1 = original as? [Double], let d2 = other as? [Double] {
-        return mergeUnique(list: d1, with: d2, path: path)
-      }
-    }
-
-    log("merged lists", path: path)
-    return original + other
-  }
-
-  func mergeUnique<T: Hashable>(list original: [T], with other: [T], path: [String]) -> [T] {
-    var seen = Set(original)
-    var combined = original
-    for item in other {
-      if !seen.contains(item) {
-        seen.insert(item)
-        combined.append(item)
-      }
-    }
-
-    log("uniqued \(T.self) lists", path: path)
-    return combined
-  }
-
-  func log(_ message: String, path: [String]) {
-    if options.verbose {
-      if path.isEmpty {
-        print(message, to: &stderr)
-      } else {
-        let pathString = path.joined(separator: ".")
-        print("\(message) [\(pathString)]", to: &stderr)
-      }
-    }
   }
 }
 

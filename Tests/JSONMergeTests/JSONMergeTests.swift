@@ -1,8 +1,9 @@
+import DictionaryMerger
 import JSONMerge
 import Matchable
 import Testing
 
-@Suite struct MergeTests {
+@Suite struct JSONMergeTests {
   @Test func testMergeDictionaries() throws {
     let jsonA = try JSONFile(
       """
@@ -142,7 +143,7 @@ import Testing
       """
     )
 
-    let merger = JSONMerger(options: JSONMerger.Options(uniqueLists: true))
+    let merger = JSONMerger(options: DictionaryMerger.Options(uniqueLists: true))
     let merged = try! merger.merge([jsonA, jsonB])
 
     try merged.formatted.assertMatches(
