@@ -16,7 +16,7 @@ struct SleepCommand: ModProcessingCommand {
   }
 
   struct ModRecord: Codable {
-    let armours: [SleepArmourRecord]
+    let armours: [SleepArmourRecord]?
   }
 
   struct SleepArmourRecord: Codable {
@@ -36,21 +36,24 @@ struct SleepCommand: ModProcessingCommand {
   func process(mods: [String: ModRecord], cwd: URL) {
     if let outputURL = outputPath.map({ URL(fileURLWithPath: $0, relativeTo: cwd) }) {
       for (mod, info) in mods {
-        let ids = info.armours.compactMap { $0.formID }
-        let json = json(forIDs: ids, mod: mod)
-        try? json.write(to: outputURL.appending(path: "\(mod).json"))
+        if let armours = info.armours {
+          log("Processing \(mod) with \(armours.count) armours")
+          let ids = armours.compactMap { $0.formID }
+          let json = json(forIDs: ids, mod: mod)
+          try? json.write(to: outputURL.appending(path: "\(mod).json"))
+        }
       }
     }
   }
 
   func json(forIDs ids: [String], mod: String) -> String {
-    let items = ids.map { id in "\(id)|\(mod)" }
+    let items = ids.map { id in "          \"\(id.cleanHex)|\(mod)\"" }
     let expanded = items.joined(separator: ",\n")
     return """
         {
           "formList": {
               "items": [
-                \(expanded)
+      \(expanded)
               ]
           },
           "int": {
@@ -59,5 +62,27 @@ struct SleepCommand: ModProcessingCommand {
           }
       }
       """
+  }
+}
+
+extension String {
+  var cleanHex: String {
+    var cleaned = self
+    if cleaned.hasPrefix("0x") {
+      cleaned.removeFirst(2)
+    }
+
+    if let i = Int(self, radix: 16) {
+      if i & 0xFF00_0000 == 0xFF00_0000 {
+        return String(format: "0x%X", i & 0xFFFF)
+      } else {
+        return String(format: "0x%X", i & 0xFFFFFF)
+      }
+    }
+
+    while cleaned.hasPrefix("0") {
+      cleaned.removeFirst()
+    }
+    return "0x" + cleaned.uppercased()
   }
 }
