@@ -15,7 +15,7 @@ struct ModsCommand: ParsableCommand {
   }
 
   @Flag() var verbose: Bool = false
-  @Option(help: "Path to a JSON file containing mod data.") var modsPath: String?
+  @Option(help: "Path to a folder containing mod data files.") var modsPath: String?
   @Option(help: "Path to the output .json file for RSV data.") var rsvOutputPath: String?
   @Option(help: "Path to the output .ini for OBody data.") var obodyOutputPath: String?
 
@@ -23,57 +23,71 @@ struct ModsCommand: ParsableCommand {
     let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     let modsURL = modsPath.map { URL(fileURLWithPath: $0, relativeTo: cwd) }
 
-    if let modURL = modsURL {
-      let decoder = JSONDecoder()
-      let data = try Data(contentsOf: modURL)
-      let modCollection = try decoder.decode([String: ModRecord].self, from: data)
-      process(mods: modCollection)
+    guard let modsURL else {
+      print("No mods path specified.")
+      return
     }
 
-    func process(mods: [String: ModRecord]) {
-      var obodyFemaleIds: [String] = []
-      var obodyMaleIds: [String] = []
-      for (mod, info) in mods {
-        if info.skipOBodyFemale == true || info.skipOBody == true {
-          obodyFemaleIds.append(mod)
-        }
-        if info.skipOBodyMale == true || info.skipOBody == true {
-          obodyMaleIds.append(mod)
-        }
-      }
-
-      if let outputURL = obodyOutputPath.map({ URL(fileURLWithPath: $0, relativeTo: cwd) }) {
-        processOBody(maleIDs: obodyMaleIds, femaleIDs: obodyFemaleIds, to: outputURL)
-      }
-    }
-
-    func processOBody(maleIDs: [String], femaleIDs: [String], to url: URL) {
-      let maleIdList =
-        maleIDs
-        .sorted()
-        .map { "\n      \"\($0)\"" }
-        .joined(separator: ",")
-
-      let femaleIdList =
-        femaleIDs
-        .sorted()
-        .map { "\n      \"\($0)\"" }
-        .joined(separator: ",")
-
-      let ini = """
-        {
-            "blacklistedNpcsPluginFemale" : [\(femaleIdList)
-            ],
-            "blacklistedNpcsPluginMale" : [\(maleIdList)
-            ]
-        }
-        """
-
+    let decoder = JSONDecoder()
+    var mods: [String: ModRecord] = [:]
+    for modURL in try FileManager.default.contentsOfDirectory(
+      at: modsURL, includingPropertiesForKeys: [])
+    {
       do {
-        try ini.write(to: url)
+        let data = try Data(contentsOf: modURL)
+        let mod = try decoder.decode(ModRecord.self, from: data)
+        mods[modURL.deletingPathExtension().lastPathComponent] = mod
       } catch {
-        print("Error writing OBody INI file: \(error)")
+        print("Error decoding mod at \(modURL): \(error)")
       }
+    }
+
+    process(mods: mods, cwd: cwd)
+  }
+
+  func process(mods: [String: ModRecord], cwd: URL) {
+    var obodyFemaleIds: [String] = []
+    var obodyMaleIds: [String] = []
+    for (mod, info) in mods {
+      if info.skipOBodyFemale == true || info.skipOBody == true {
+        obodyFemaleIds.append(mod)
+      }
+      if info.skipOBodyMale == true || info.skipOBody == true {
+        obodyMaleIds.append(mod)
+      }
+    }
+
+    if let outputURL = obodyOutputPath.map({ URL(fileURLWithPath: $0, relativeTo: cwd) }) {
+      processOBody(maleIDs: obodyMaleIds, femaleIDs: obodyFemaleIds, to: outputURL)
+    }
+  }
+
+  func processOBody(maleIDs: [String], femaleIDs: [String], to url: URL) {
+    let maleIdList =
+      maleIDs
+      .sorted()
+      .map { "\n      \"\($0)\"" }
+      .joined(separator: ",")
+
+    let femaleIdList =
+      femaleIDs
+      .sorted()
+      .map { "\n      \"\($0)\"" }
+      .joined(separator: ",")
+
+    let ini = """
+      {
+          "blacklistedNpcsPluginFemale" : [\(femaleIdList)
+          ],
+          "blacklistedNpcsPluginMale" : [\(maleIdList)
+          ]
+      }
+      """
+
+    do {
+      try ini.write(to: url)
+    } catch {
+      print("Error writing OBody INI file: \(error)")
     }
   }
 }

@@ -45,7 +45,7 @@
         "mods",
         "--verbose",
         "--mods-path",
-        "${workspaceFolder}/../skyrim-config/mods.json",
+        "${workspaceFolder}/../skyrim-config/Data/Mods",
         "--rsv-output-path",
         "../skyrim-config/Overlays/RSV/RSVScorpioMods_DISTR.ini",
         "--obody-output-path",
