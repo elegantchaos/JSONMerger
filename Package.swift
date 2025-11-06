@@ -16,8 +16,8 @@ let package = Package(
 
   products: [
     .executable(
-      name: "json-merge",
-      targets: ["JSONMerge"]
+      name: "skyrim-tools",
+      targets: ["SkyrimTools"]
     )
   ],
 
@@ -33,7 +33,7 @@ let package = Package(
     ),
 
     .executableTarget(
-      name: "JSONMerge",
+      name: "SkyrimTools",
       dependencies: [
         "DictionaryMerger",
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
@@ -43,9 +43,9 @@ let package = Package(
       ]
     ),
     .testTarget(
-      name: "JSONMergeTests",
+      name: "SkyrimToolsTests",
       dependencies: [
-        "JSONMerge",
+        "SkyrimTools",
         .product(name: "Matchable", package: "Matchable"),
       ]
     ),
