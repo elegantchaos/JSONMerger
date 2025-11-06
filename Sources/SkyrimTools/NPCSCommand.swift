@@ -58,7 +58,11 @@ struct NPCSCommand: ParsableCommand {
     }
 
     func processRSV(idList: [String], to url: URL) {
-      let ids = idList.joined(separator: ",")
+      let ids =
+        idList
+        .sorted()
+        .joined(separator: ",")
+
       let ini = """
         Keyword = RSVignore|\(ids)
         Keyword = RSVignoreTeeth|\(ids)
