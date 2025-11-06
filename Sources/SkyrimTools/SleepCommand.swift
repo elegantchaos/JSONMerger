@@ -7,7 +7,7 @@ import ArgumentParser
 import DictionaryMerger
 import Foundation
 
-struct SleepCommand: LoggableCommand {
+struct SleepCommand: ModProcessingCommand {
   static var configuration: CommandConfiguration {
     CommandConfiguration(
       commandName: "sleep",
@@ -15,31 +15,49 @@ struct SleepCommand: LoggableCommand {
     )
   }
 
-  @Argument(help: "The JSON files to merge.")
-  var files: [String]
+  struct ModRecord: Codable {
+    let armours: [SleepArmourRecord]
+  }
+
+  struct SleepArmourRecord: Codable {
+    let formID: String?
+    let editorID: String?
+    let name: String?
+  }
 
   @Flag() var verbose: Bool = false
-  @Flag() var uniqueLists: Bool = false
+  @Option(help: "Path to a folder containing mod data files.") var modsPath: String?
+  @Option(help: "Path to write the output files to.") var outputPath: String?
 
   mutating func run() throws {
-    let options = DictionaryMerger.Options(
-      uniqueLists: uniqueLists,
-      verbose: verbose
-    )
+    try loadAndProcessMods()
+  }
 
-    let merger = JSONMerger(options: options)
-
-    let files = self.files.compactMap { try? JSONFile(contentsOf: URL(fileURLWithPath: $0)) }
-
-    switch files.count {
-    case 0:
-      log("No valid JSON files found.", path: [])
-    case 1:
-      print(files[0].formatted)
-    default:
-      let merged = try merger.merge(files)
-      print(merged.formatted)
+  func process(mods: [String: ModRecord], cwd: URL) {
+    if let outputURL = outputPath.map({ URL(fileURLWithPath: $0, relativeTo: cwd) }) {
+      for (mod, info) in mods {
+        let ids = info.armours.compactMap { $0.formID }
+        let json = json(forIDs: ids, mod: mod)
+        try? json.write(to: outputURL.appending(path: "\(mod).json"))
+      }
     }
   }
 
+  func json(forIDs ids: [String], mod: String) -> String {
+    let items = ids.map { id in "\(id)|\(mod)" }
+    let expanded = items.joined(separator: ",\n")
+    return """
+        {
+          "formList": {
+              "items": [
+                \(expanded)
+              ]
+          },
+          "int": {
+              "itemmode": 0,
+              "version": 110
+          }
+      }
+      """
+  }
 }

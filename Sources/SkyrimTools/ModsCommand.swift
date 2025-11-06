@@ -6,12 +6,26 @@
 import ArgumentParser
 import Foundation
 
-struct ModsCommand: ParsableCommand {
+struct ModsCommand: ModProcessingCommand {
   static var configuration: CommandConfiguration {
     CommandConfiguration(
       commandName: "mods",
       abstract: "Apply multiple mod configurations."
     )
+  }
+
+  struct ModRecord: Codable {
+    /// Should we add the mod to the blacklist for OBody?
+    let skipOBody: Bool?
+
+    /// Should we add the mod to the blacklist for OBody female?
+    let skipOBodyFemale: Bool?
+
+    /// Should we add the mod to the blacklist for OBody male?
+    let skipOBodyMale: Bool?
+
+    /// Should we add the mod to the blacklist for RSV?
+    let skipRSV: Bool?
   }
 
   @Flag() var verbose: Bool = false
@@ -20,41 +34,29 @@ struct ModsCommand: ParsableCommand {
   @Option(help: "Path to the output .ini for OBody data.") var obodyOutputPath: String?
 
   mutating func run() throws {
-    let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    let modsURL = modsPath.map { URL(fileURLWithPath: $0, relativeTo: cwd) }
-
-    guard let modsURL else {
-      print("No mods path specified.")
-      return
-    }
-
-    let decoder = JSONDecoder()
-    var mods: [String: ModRecord] = [:]
-    for modURL in try FileManager.default.contentsOfDirectory(
-      at: modsURL, includingPropertiesForKeys: [])
-    {
-      do {
-        let data = try Data(contentsOf: modURL)
-        let mod = try decoder.decode(ModRecord.self, from: data)
-        mods[modURL.deletingPathExtension().lastPathComponent] = mod
-      } catch {
-        print("Error decoding mod at \(modURL): \(error)")
-      }
-    }
-
-    process(mods: mods, cwd: cwd)
+    log("Processing mods...")
+    try loadAndProcessMods()
+    log("Done.")
   }
 
   func process(mods: [String: ModRecord], cwd: URL) {
     var obodyFemaleIds: [String] = []
     var obodyMaleIds: [String] = []
     for (mod, info) in mods {
+      var processed = false
       if info.skipOBodyFemale == true || info.skipOBody == true {
         obodyFemaleIds.append(mod)
+        processed = true
       }
       if info.skipOBodyMale == true || info.skipOBody == true {
         obodyMaleIds.append(mod)
+        processed = true
       }
+
+      if processed {
+        log("Processing \(mod)")
+      }
+
     }
 
     if let outputURL = obodyOutputPath.map({ URL(fileURLWithPath: $0, relativeTo: cwd) }) {
@@ -90,18 +92,4 @@ struct ModsCommand: ParsableCommand {
       print("Error writing OBody INI file: \(error)")
     }
   }
-}
-
-struct ModRecord: Codable {
-  /// Should we add the mod to the blacklist for OBody?
-  let skipOBody: Bool?
-
-  /// Should we add the mod to the blacklist for OBody female?
-  let skipOBodyFemale: Bool?
-
-  /// Should we add the mod to the blacklist for OBody male?
-  let skipOBodyMale: Bool?
-
-  /// Should we add the mod to the blacklist for RSV?
-  let skipRSV: Bool?
 }

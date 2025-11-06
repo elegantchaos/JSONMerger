@@ -1,27 +1,25 @@
 {
   "configurations": [
     {
+      "name": "Debug sleep",
       "type": "swift",
       "request": "launch",
-      "name": "Debug sleep",
       "target": "skyrim-tools",
       "args": [
         "sleep",
         "--verbose",
-        "--npcs-path",
-        "${workspaceFolder}/../skyrim-config/npcs.json",
-        "--rsv-output-path",
-        "../skyrim-config/Overlays/RSV/RSVScorpioNPC_DISTR.ini",
-        "--obody-output-path",
-        "../skyrim-config/Overlays/OBody/npcs.json"
+        "--mods-path",
+        "${workspaceFolder}/../skyrim-config/Data/Mods",
+        "--output-path",
+        "${workspaceFolder}/../skyrim-config/Overlays/Sleep/",
       ],
       "configuration": "debug",
       "preLaunchTask": "swift: Build All"
     },
     {
+      "name": "Debug npcs",
       "type": "swift",
       "request": "launch",
-      "name": "Debug npcs",
       "target": "skyrim-tools",
       "args": [
         "npcs",
@@ -37,9 +35,9 @@
       "preLaunchTask": "swift: Build All"
     },
     {
+      "name": "Debug mods",
       "type": "swift",
       "request": "launch",
-      "name": "Debug mods",
       "target": "skyrim-tools",
       "args": [
         "mods",
