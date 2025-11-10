@@ -41,14 +41,21 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     log("Extracting ALSAR settings...")
     var armos = try extractARMOData()
     let armas = try extractARMAData()
+    var settings: [String: ARMOSettings] = [:]
 
     for (name, armo) in armos {
       if let pair = armas[armo.arma] {
-        if armo.dlc != pair.dlc {
-          log("Warning: DLC mismatch for ARMA \(armo.arma) referenced by ARMO \(name)")
+        if let mode = armo.mode, let options = pair.options {
+          let setting = ARMOSettings(
+            mode: mode,
+            options: options
+          )
+          settings[name] = setting
+        } else {
+          log("Warning: Missing mode or options for ARMO \(name)")
         }
-        armo.options = pair.options
-        pair.options = nil
+
+        armo.category = pair.category
       } else {
         log("Warning: No ARMA found for \(armo.arma) referenced by ARMO \(name)")
       }
@@ -56,7 +63,16 @@ struct AlsarCommand: LoggableCommand, GameCommand {
       armos[name] = armo
     }
 
-    let config = ARMOConfig(armos: armos, armas: armas)
+    for (_, pair) in armas {
+      pair.category = nil
+      pair.options = nil
+    }
+
+    let config = ARMOConfig(
+      modes: settings,
+      source: ARMOSource(armour: armos, mapping: armas)
+    )
+
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     let data = try encoder.encode(config)
@@ -79,8 +95,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
         if name != "ARMO_NAME" {  // skip header
           let entry = ARMOEntry(
             formID: Int(fields[0], radix: 16) ?? 0,
-            enabled: true,
-            loose: fields[1] == "1",
+            mode: ARMOMode.fromCode(String(fields[1])),
             dlc: Int(fields[2]) ?? 0,
             arma: String(fields[3]),
           )
@@ -187,30 +202,41 @@ struct AlsarCommand: LoggableCommand, GameCommand {
   }
 }
 
+/// Configuration file.
 struct ARMOConfig: Codable {
-  let armos: [String: ARMOEntry]
-  let armas: [String: ARMAPair]
+  /// Modes for each armour piece.
+  let modes: [String: ARMOSettings]
+
+  /// Armour source data from the original mod.
+  let source: ARMOSource
 }
+
+/// Source data for armour pieces.
+struct ARMOSource: Codable {
+  let armour: [String: ARMOEntry]
+  let mapping: [String: ARMAPair]
+
+}
+
+/// Entry for an armour piece, taken from the zzLSARSetting_ARMO.ini file.
 class ARMOEntry: Codable {
   internal init(
-    formID: Int, enabled: Bool, loose: Bool, dlc: Int, arma: String, options: ARMAOptions? = nil
+    formID: Int, mode: ARMOMode, dlc: Int, arma: String
   ) {
     self.formID = formID
-    self.enabled = enabled
-    self.loose = loose
+    self.mode = mode
     self.dlc = dlc
     self.arma = arma
-    self.options = options
   }
 
   let formID: Int
-  let enabled: Bool
-  let loose: Bool
+  let mode: ARMOMode?
   let dlc: Int
   let arma: String
-  var options: ARMAOptions?
+  var category: ARMACategory?
 }
 
+/// Category of armour.
 enum ARMACategory: String, Codable {
   case cloth
   case light
@@ -231,6 +257,7 @@ enum ARMACategory: String, Codable {
   }
 }
 
+/// Pair of loose and fitted ARMA entries.
 class ARMAPair: Codable {
   internal init(
     category: ARMACategory, dlc: Int, priority: Int, loose: ARMACompact, fitted: ARMACompact,
@@ -244,7 +271,7 @@ class ARMAPair: Codable {
     self.options = options
   }
 
-  let category: ARMACategory
+  var category: ARMACategory?
   let dlc: Int
   let priority: Int
   let loose: ARMACompact
@@ -252,6 +279,34 @@ class ARMAPair: Codable {
   var options: ARMAOptions?
 }
 
+/// Settings for an armour piece.
+struct ARMOSettings: Codable {
+  let mode: ARMOMode
+  let options: ARMAOptions
+}
+
+/// Mode for an armour piece.
+/// - off: No ALSAR applied.
+/// - loose: Loose fit.
+/// - fitted: Well-fitted fit.
+enum ARMOMode: String, Codable {
+  case off
+  case loose
+  case fitted
+
+  static func fromCode(_ code: String) -> Self {
+    switch code {
+    case "L":
+      return .loose
+    case "W":
+      return .fitted
+    default:
+      return .off
+    }
+  }
+}
+
+/// Entry for an ARMA record, taken from the zzLSARSetting_ARMA.ini file.
 struct ARMAEntry: Codable {
   let category: ARMACategory
   let formID: Int
@@ -261,11 +316,13 @@ struct ARMAEntry: Codable {
   let editorID: String
 }
 
+/// Compact representation of an ARMA record.
 struct ARMACompact: Codable {
   let formID: Int
   let editorID: String
 }
 
+/// Options for an ARMA record.
 struct ARMAOptions: Codable {
   let skirt: Bool
   let panty: Bool
