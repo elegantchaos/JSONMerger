@@ -16,10 +16,12 @@ struct RootCommand: AsyncParsableCommand {
       commandName: "json-merge",
       abstract: "Assorted tools for merging configuration files.",
       subcommands: [
+        AlsarCommand.self,
         MergeCommand.self,
         ModsCommand.self,
         NPCSCommand.self,
         OverlayCommand.self,
+        PullModsCommand.self,
         SleepCommand.self,
       ]
     )

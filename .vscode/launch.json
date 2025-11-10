@@ -1,6 +1,22 @@
 {
   "configurations": [
     {
+      "name": "Debug pull-mods",
+      "type": "swift",
+      "request": "launch",
+      "target": "skyrim-tools",
+      "args": [
+        "pull-mods",
+        "--verbose",
+        "--mods-path",
+        "${workspaceFolder}/../skyrim-config/Data/Mods",
+        "--game-path",
+        "${workspaceFolder}/../skyrim-config/Extras/Dummy Game Folder",
+      ],
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build All"
+    },
+    {
       "name": "Debug sleep",
       "type": "swift",
       "request": "launch",
