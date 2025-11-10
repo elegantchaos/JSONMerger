@@ -43,11 +43,14 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     let armas = try extractARMAData()
 
     for (name, armo) in armos {
-      let pair = armas[armo.arma]
-      if pair == nil {
+      if let pair = armas[armo.arma] {
+        if armo.dlc != pair.dlc {
+          log("Warning: DLC mismatch for ARMA \(armo.arma) referenced by ARMO \(name)")
+        }
+        armo.options = pair.options
+        pair.options = nil
+      } else {
         log("Warning: No ARMA found for \(armo.arma) referenced by ARMO \(name)")
-      } else if armo.dlc != pair?.dlc {
-        log("Warning: DLC mismatch for ARMA \(armo.arma) referenced by ARMO \(name)")
       }
 
       armos[name] = armo
@@ -80,7 +83,6 @@ struct AlsarCommand: LoggableCommand, GameCommand {
             loose: fields[1] == "1",
             dlc: Int(fields[2]) ?? 0,
             arma: String(fields[3]),
-            armo: name
           )
           armos[name] = entry
         }
@@ -164,12 +166,10 @@ struct AlsarCommand: LoggableCommand, GameCommand {
 
         let looseCompact = ARMACompact(
           formID: loose.formID,
-          options: loose.options,
           editorID: loose.editorID
         )
         let fittedCompact = ARMACompact(
           formID: fitted.formID,
-          options: fitted.options,
           editorID: fitted.editorID
         )
 
@@ -178,7 +178,8 @@ struct AlsarCommand: LoggableCommand, GameCommand {
           dlc: loose.dlc,
           priority: loose.priority,
           loose: looseCompact,
-          fitted: fittedCompact
+          fitted: fittedCompact,
+          options: loose.options
         )
       }
     }
@@ -190,13 +191,24 @@ struct ARMOConfig: Codable {
   let armos: [String: ARMOEntry]
   let armas: [String: ARMAPair]
 }
-struct ARMOEntry: Codable {
+class ARMOEntry: Codable {
+  internal init(
+    formID: Int, enabled: Bool, loose: Bool, dlc: Int, arma: String, options: ARMAOptions? = nil
+  ) {
+    self.formID = formID
+    self.enabled = enabled
+    self.loose = loose
+    self.dlc = dlc
+    self.arma = arma
+    self.options = options
+  }
+
   let formID: Int
   let enabled: Bool
   let loose: Bool
   let dlc: Int
   let arma: String
-  let armo: String
+  var options: ARMAOptions?
 }
 
 enum ARMACategory: String, Codable {
@@ -219,12 +231,25 @@ enum ARMACategory: String, Codable {
   }
 }
 
-struct ARMAPair: Codable {
+class ARMAPair: Codable {
+  internal init(
+    category: ARMACategory, dlc: Int, priority: Int, loose: ARMACompact, fitted: ARMACompact,
+    options: ARMAOptions? = nil
+  ) {
+    self.category = category
+    self.dlc = dlc
+    self.priority = priority
+    self.loose = loose
+    self.fitted = fitted
+    self.options = options
+  }
+
   let category: ARMACategory
   let dlc: Int
   let priority: Int
   let loose: ARMACompact
   let fitted: ARMACompact
+  var options: ARMAOptions?
 }
 
 struct ARMAEntry: Codable {
@@ -238,7 +263,6 @@ struct ARMAEntry: Codable {
 
 struct ARMACompact: Codable {
   let formID: Int
-  let options: ARMAOptions
   let editorID: String
 }
 
