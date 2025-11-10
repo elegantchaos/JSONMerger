@@ -1,6 +1,23 @@
 {
   "configurations": [
     {
+      "name": "Debug alsar",
+      "type": "swift",
+      "request": "launch",
+      "target": "skyrim-tools",
+      "args": [
+        "alsar",
+        "--verbose",
+        "--pull",
+        "--config-path",
+        "${workspaceFolder}/../skyrim-config/Data/alsar.json",
+        "--game-path",
+        "${workspaceFolder}/../skyrim-config/Extras/Dummy Game Folder",
+      ],
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build All"
+    },
+    {
       "name": "Debug pull-mods",
       "type": "swift",
       "request": "launch",

@@ -6,7 +6,7 @@
 import ArgumentParser
 import Foundation
 
-struct PullModsCommand: LoggableCommand {
+struct PullModsCommand: LoggableCommand, GameCommand {
   static var configuration: CommandConfiguration {
     CommandConfiguration(
       commandName: "pull-mods",
@@ -25,10 +25,6 @@ struct PullModsCommand: LoggableCommand {
       print("No mods path specified.")
       return
     }
-
-    let gameURL =
-      gamePath.map { URL(fileURLWithPath: $0, relativeTo: cwd) } ?? cwd.appending(path: "Output")
-    let dataURL = gameURL.appending(path: "Data")
 
     let files = try FileManager.default.contentsOfDirectory(
       at: dataURL, includingPropertiesForKeys: [])
