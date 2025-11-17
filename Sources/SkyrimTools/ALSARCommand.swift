@@ -6,6 +6,8 @@
 import ArgumentParser
 import Foundation
 
+// TODO: Split the config file into settings and data files? The user should only need to change the settings.
+
 struct AlsarCommand: LoggableCommand, GameCommand {
   static var configuration: CommandConfiguration {
     CommandConfiguration(
@@ -41,8 +43,11 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     let data = try Data(contentsOf: configURL)
     let config = try decoder.decode(ARMOConfig.self, from: data)
 
-    let entries = sortedEntries(config: config)
-    try writeARMOSettings(entries: entries)
+    let armoEntries = sortedARMOEntries(config: config)
+    try writeARMOSettings(entries: armoEntries)
+
+    let armaEntries = sortedARMAEntries(config: config)
+    try writeARMASettings(entries: armaEntries)
   }
 
   /// Extract initial settings from the ALSAR ini files and write out a config file.
@@ -95,7 +100,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
   }
 
   /// Get sorted list of enabled armour entries.
-  func sortedEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMOEntry)] {
+  func sortedARMOEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMOEntry)] {
     return config.modes.compactMap { name, settings in
       if let armour = config.source.armour[name] {
         return (name, settings, armour)
@@ -106,6 +111,39 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     }.sorted { $0.2.formID < $1.2.formID }
   }
 
+  func sortedARMAEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMAEntry)] {
+    var entries: [(String, ARMOSettings, ARMAEntry)] = []
+
+    for (name, settings) in config.modes {
+      if let armour = config.source.armour[name], let options = settings.options {
+        if let pair = config.source.mapping[armour.arma] {
+          let armaEntry: ARMAEntry
+          if settings.mode == .loose {
+            armaEntry = ARMAEntry(
+              category: armour.category!,
+              formID: pair.loose.formID,
+              options: options,
+              priority: pair.priority,
+              dlc: pair.dlc,
+              editorID: pair.loose.editorID
+            )
+          } else {
+            armaEntry = ARMAEntry(
+              category: armour.category!,
+              formID: pair.fitted.formID,
+              options: options,
+              priority: pair.priority,
+              dlc: pair.dlc,
+              editorID: pair.fitted.editorID
+            )
+          }
+          entries.append((name, settings, armaEntry))
+        }
+      }
+    }
+
+    return entries.sorted { $0.2.formID < $1.2.formID }
+  }
   /// Write out the ARMO settings file.
   func writeARMOSettings(entries: [(String, ARMOSettings, ARMOEntry)]) throws {
     var armo = "ArmoFormID\tWorL\tDLC\tARMA_NAME\tARMO_NAME\n"
@@ -120,6 +158,41 @@ struct AlsarCommand: LoggableCommand, GameCommand {
 
     let armoURL = skseURL.appending(path: "zzLSARSetting_ARMO.ini")
     try armo.write(to: armoURL)
+  }
+
+  /// Write out the ARMA settings file.
+  func writeARMASettings(entries: [(String, ARMOSettings, ARMAEntry)]) throws {
+    var arma = """
+      #ARMA_CONFIG										
+      # NAME and WorL: key of ARMA ( like "L" + "ArchmageRobesAA" )										
+      # formID: ARMA's formID										
+      # armo_type: C/L/H/O = Clothes/LightArmor/HeavyArmor/Other										
+      # WorL: wellfitted or Loose										
+      # skirt, panty, bra, greave: active/deactive swith. ( greave on/off function is disable from 2018/05/06 )										
+      # priority: priority in ARMA										
+      # dls_type: 0/1/3 = skyrim.esm/dawnguard.esm/dragonborn.esm										
+      #src     		armo	Wor	ski	pan	bra	gre	pri	dlc	
+      #NAME	formID    	type	L	rt	ty		ave	ori	Type	EDITORID
+      """
+
+    for (name, settings, entry) in entries {
+      if let options = settings.options {
+        arma += "\(name)\t"
+        arma += "\(String(format: "%08X", entry.formID))\t"
+        arma += "\(entry.category.letterCode)\t"
+        arma += "\(settings.mode.configChar)\t"
+        arma += options.skirt ? "1\t" : "0\t"
+        arma += options.panty ? "1\t" : "0\t"
+        arma += options.bra ? "1\t" : "0\t"
+        arma += options.greaves ? "1\t" : "0\t"
+        arma += "\(entry.priority)\t"
+        arma += "\(entry.dlc)\t"
+        arma += "\(entry.editorID)\n"
+      }
+    }
+
+    let armaURL = skseURL.appending(path: "zzLSARSetting_ARMA.ini")
+    try arma.write(to: armaURL)
   }
 
   func extractARMOData() throws -> [String: ARMOEntry] {
@@ -295,6 +368,19 @@ enum ARMACategory: String, Codable {
       return .heavy
     default:
       return .other
+    }
+  }
+
+  var letterCode: String {
+    switch self {
+    case .cloth:
+      return "C"
+    case .light:
+      return "L"
+    case .heavy:
+      return "H"
+    case .other:
+      return "O"
     }
   }
 }
