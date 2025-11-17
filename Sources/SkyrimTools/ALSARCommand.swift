@@ -67,6 +67,11 @@ struct AlsarCommand: LoggableCommand, GameCommand {
         armo.category = pair.category
       } else {
         log("Warning: No ARMA found for \(armo.arma) referenced by ARMO \(name)")
+        let setting = ARMOSettings(
+          mode: armo.mode ?? .off,
+          options: nil
+        )
+        settings[name] = setting
       }
 
       armos[name] = armo
@@ -319,7 +324,7 @@ class ARMAPair: Codable {
 /// Settings for an armour piece.
 struct ARMOSettings: Codable {
   let mode: ARMOMode
-  let options: ARMAOptions
+  let options: ARMAOptions?
 }
 
 /// Mode for an armour piece.
@@ -327,8 +332,13 @@ struct ARMOSettings: Codable {
 /// - loose: Loose fit.
 /// - fitted: Well-fitted fit.
 enum ARMOMode: String, Codable {
+  /// No ALSAR applied.
   case off
+
+  /// Loose fit.
   case loose
+
+  /// Well-fitted fit.
   case fitted
 
   static func fromCode(_ code: String) -> Self {
