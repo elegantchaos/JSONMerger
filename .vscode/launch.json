@@ -8,7 +8,6 @@
       "args": [
         "alsar",
         "--verbose",
-        "--pull",
         "--config-path",
         "${workspaceFolder}/../skyrim-config/Data/alsar.json",
         "--game-path",

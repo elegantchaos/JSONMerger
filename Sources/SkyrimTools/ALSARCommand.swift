@@ -28,13 +28,43 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     if pull {
       try pullSettings(configURL: configURL)
     } else {
-      try generateSettings()
+      try generateSettings(configURL: configURL)
     }
     log("Done.")
   }
 
-  func generateSettings() throws {
+  func generateSettings(configURL: URL) throws {
     log("Generating ALSAR settings...")
+
+    let decoder = JSONDecoder()
+    let data = try Data(contentsOf: configURL)
+    let config = try decoder.decode(ARMOConfig.self, from: data)
+
+    let entries = sortedEntries(config: config)
+
+    for (name, settings, armour) in entries {
+      if settings.mode != .off {
+        let hexForm = String(format: "%08X", armour.formID)
+        print(
+          "\(hexForm)\t\(settings.mode.configChar)\t\(armour.dlc)\t\(armour.arma)\t\(name)"
+        )
+      }
+    }
+  }
+
+  func sortedEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMOEntry)] {
+    return config.modes.compactMap { name, settings in
+      if let armour = config.source.armour[name] {
+        switch settings.mode {
+        case .off: return nil
+        default:
+          return (name, settings, armour)
+        }
+      } else {
+        log("Warning: No ARMA mapping found for armour piece \(name) in config modes.")
+        return nil
+      }
+    }.sorted { $0.2.formID < $1.2.formID }
   }
 
   func pullSettings(configURL: URL) throws {
@@ -302,6 +332,17 @@ enum ARMOMode: String, Codable {
       return .fitted
     default:
       return .off
+    }
+  }
+
+  var configChar: String {
+    switch self {
+    case .off:
+      return "O"
+    case .loose:
+      return "L"
+    case .fitted:
+      return "W"
     }
   }
 }
