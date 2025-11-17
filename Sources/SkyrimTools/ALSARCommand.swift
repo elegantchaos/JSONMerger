@@ -8,7 +8,7 @@ import Foundation
 
 // TODO: Split the config file into settings and data files? The user should only need to change the settings.
 
-struct AlsarCommand: LoggableCommand, GameCommand {
+struct AlsarCommand: LoggableCommand {
   static var configuration: CommandConfiguration {
     CommandConfiguration(
       commandName: "alsar",
@@ -19,7 +19,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
   @Flag() var verbose: Bool = false
   @Flag() var pull: Bool = false
   @Option(help: "Path to a the alsar.json config file.") var configPath: String?
-  @Option(help: "Path to the game data.") var gamePath: String?
+  @Option(help: "Path to the ini files.") var iniPath: String?
 
   mutating func run() throws {
     guard let configURL = configPath?.relativeURL else {
@@ -27,16 +27,21 @@ struct AlsarCommand: LoggableCommand, GameCommand {
       return
     }
 
+    guard let iniURL = iniPath?.relativeURL else {
+      log("No ini path provided; skipping.")
+      return
+    }
+
     if pull {
-      try pullSettings(configURL: configURL)
+      try pullSettings(configURL: configURL, iniURL: iniURL)
     } else {
-      try generateSettings(configURL: configURL)
+      try generateSettings(configURL: configURL, iniURL: iniURL)
     }
     log("Done.")
   }
 
   /// Generate ALSAR settings from a config file.
-  func generateSettings(configURL: URL) throws {
+  func generateSettings(configURL: URL, iniURL: URL) throws {
     log("Generating ALSAR settings...")
 
     let decoder = JSONDecoder()
@@ -49,17 +54,17 @@ struct AlsarCommand: LoggableCommand, GameCommand {
       ARMOSource.self, from: try Data(contentsOf: sourceFileURL))
 
     let armoEntries = sortedARMOEntries(config: config, source: source)
-    try writeARMOSettings(entries: armoEntries)
+    try writeARMOSettings(entries: armoEntries, iniURL: iniURL)
 
     let armaEntries = sortedARMAEntries(config: config, source: source)
-    try writeARMASettings(entries: armaEntries)
+    try writeARMASettings(entries: armaEntries, iniURL: iniURL)
   }
 
   /// Extract initial settings from the ALSAR ini files and write out a config file.
-  func pullSettings(configURL: URL) throws {
+  func pullSettings(configURL: URL, iniURL: URL) throws {
     log("Extracting ALSAR settings...")
-    var armos = try extractARMOData()
-    let armas = try extractARMAData()
+    var armos = try extractARMOData(iniURL: iniURL)
+    let armas = try extractARMAData(iniURL: iniURL)
 
     var modes: [String: ARMOMode] = [:]
     var settings: [String: ARMAOptions] = [:]
@@ -166,7 +171,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
   }
 
   /// Write out the ARMO settings file.
-  func writeARMOSettings(entries: [(String, ARMOMode, ARMOEntry)]) throws {
+  func writeARMOSettings(entries: [(String, ARMOMode, ARMOEntry)], iniURL: URL) throws {
     var armo = "ArmoFormID\tWorL\tDLC\tARMA_NAME\tARMO_NAME\n"
 
     for (name, mode, armour) in entries {
@@ -177,12 +182,12 @@ struct AlsarCommand: LoggableCommand, GameCommand {
       armo += "\(hexForm)\t\(mode.configChar)\t\(armour.dlc)\t\(armour.arma)\t\(name)\n"
     }
 
-    let armoURL = skseURL.appending(path: "zzLSARSetting_ARMO.ini")
+    let armoURL = iniURL.appending(path: "zzLSARSetting_ARMO.ini")
     try armo.write(to: armoURL)
   }
 
   /// Write out the ARMA settings file.
-  func writeARMASettings(entries: [SortedARMAEntry]) throws {
+  func writeARMASettings(entries: [SortedARMAEntry], iniURL: URL) throws {
     var arma = """
       #ARMA_CONFIG										
       # NAME and WorL: key of ARMA ( like "L" + "ArchmageRobesAA" )										
@@ -204,7 +209,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
 
     arma += "# END OF LINE\n"
 
-    let armaURL = skseURL.appending(path: "zzLSARSetting_ARMA.ini")
+    let armaURL = iniURL.appending(path: "zzLSARSetting_ARMA.ini")
     try arma.write(to: armaURL)
   }
 
@@ -241,8 +246,8 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     return arma
   }
 
-  func extractARMOData() throws -> [String: ARMOEntry] {
-    let armoURL = skseURL.appending(path: "zzLSARSetting_ARMO.ini")
+  func extractARMOData(iniURL: URL) throws -> [String: ARMOEntry] {
+    let armoURL = iniURL.appending(path: "zzLSARSetting_ARMO.ini")
     let lines = try String(contentsOf: armoURL, encoding: .utf8)
       .components(separatedBy: .newlines)
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -268,8 +273,8 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     return armos
   }
 
-  func extractARMAData() throws -> [String: ARMAPair] {
-    let armaURL = skseURL.appending(path: "zzLSARSetting_ARMA.ini")
+  func extractARMAData(iniURL: URL) throws -> [String: ARMAPair] {
+    let armaURL = iniURL.appending(path: "zzLSARSetting_ARMA.ini")
     let lines = try String(contentsOf: armaURL, encoding: .utf8)
       .components(separatedBy: .newlines)
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
