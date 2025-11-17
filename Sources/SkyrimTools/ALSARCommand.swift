@@ -111,39 +111,49 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     }.sorted { $0.2.formID < $1.2.formID }
   }
 
-  func sortedARMAEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMAEntry)] {
-    var entries: [(String, ARMOSettings, ARMAEntry)] = []
+  typealias SortedARMAEntry = (String, ARMOSettings, ARMAEntry, String, String)
+
+  /// Sorted list of ARMA entries for all armour pieces.
+  /// Entries are sorted by mode (L before W) then by ARMA name.
+  /// (this is approximately the order in the original ALSAR ini file)
+  func sortedARMAEntries(config: ARMOConfig) -> [SortedARMAEntry] {
+    var entries: [SortedARMAEntry] = []
 
     for (name, settings) in config.modes {
-      if let armour = config.source.armour[name], let options = settings.options {
+      if let armour = config.source.armour[name], let options = settings.options,
+        let category = armour.category
+      {
         if let pair = config.source.mapping[armour.arma] {
-          let armaEntry: ARMAEntry
-          if settings.mode == .loose {
-            armaEntry = ARMAEntry(
-              category: armour.category!,
-              formID: pair.loose.formID,
-              options: options,
-              priority: pair.priority,
-              dlc: pair.dlc,
-              editorID: pair.loose.editorID
-            )
-          } else {
-            armaEntry = ARMAEntry(
-              category: armour.category!,
-              formID: pair.fitted.formID,
-              options: options,
-              priority: pair.priority,
-              dlc: pair.dlc,
-              editorID: pair.fitted.editorID
-            )
-          }
-          entries.append((name, settings, armaEntry))
+          let looseEntry = ARMAEntry(
+            category: category,
+            formID: pair.loose.formID,
+            options: options,
+            priority: pair.priority,
+            dlc: pair.dlc,
+            editorID: pair.loose.editorID
+          )
+          entries.append((armour.arma, settings, looseEntry, "L", name))
+
+          let fittedEntry = ARMAEntry(
+            category: category,
+            formID: pair.fitted.formID,
+            options: options,
+            priority: pair.priority,
+            dlc: pair.dlc,
+            editorID: pair.fitted.editorID
+          )
+          entries.append((armour.arma, settings, fittedEntry, "W", name))
         }
       }
     }
 
-    return entries.sorted { $0.2.formID < $1.2.formID }
+    return entries.sorted { (e1: SortedARMAEntry, e2: SortedARMAEntry) in
+      let m1 = e1.3
+      let m2 = e2.3
+      return (m1 == m2) ? (e1.0 < e2.0) : (m1 < m2)
+    }
   }
+
   /// Write out the ARMO settings file.
   func writeARMOSettings(entries: [(String, ARMOSettings, ARMOEntry)]) throws {
     var armo = "ArmoFormID\tWorL\tDLC\tARMA_NAME\tARMO_NAME\n"
@@ -161,7 +171,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
   }
 
   /// Write out the ARMA settings file.
-  func writeARMASettings(entries: [(String, ARMOSettings, ARMAEntry)]) throws {
+  func writeARMASettings(entries: [SortedARMAEntry]) throws {
     var arma = """
       #ARMA_CONFIG										
       # NAME and WorL: key of ARMA ( like "L" + "ArchmageRobesAA" )										
@@ -173,26 +183,51 @@ struct AlsarCommand: LoggableCommand, GameCommand {
       # dls_type: 0/1/3 = skyrim.esm/dawnguard.esm/dragonborn.esm										
       #src     		armo	Wor	ski	pan	bra	gre	pri	dlc	
       #NAME	formID    	type	L	rt	ty		ave	ori	Type	EDITORID
+
       """
 
-    for (name, settings, entry) in entries {
-      if let options = settings.options {
-        arma += "\(name)\t"
-        arma += "\(String(format: "%08X", entry.formID))\t"
-        arma += "\(entry.category.letterCode)\t"
-        arma += "\(settings.mode.configChar)\t"
-        arma += options.skirt ? "1\t" : "0\t"
-        arma += options.panty ? "1\t" : "0\t"
-        arma += options.bra ? "1\t" : "0\t"
-        arma += options.greaves ? "1\t" : "0\t"
-        arma += "\(entry.priority)\t"
-        arma += "\(entry.dlc)\t"
-        arma += "\(entry.editorID)\n"
-      }
-    }
+    arma += try filteredARMAChunk(entries: entries, filter: .cloth, filterName: "CLOTH")
+    arma += try filteredARMAChunk(entries: entries, filter: .light, filterName: "LIGHT_ARMOR")
+    arma += try filteredARMAChunk(entries: entries, filter: .heavy, filterName: "HEAVY_ARMOR")
+    arma += try filteredARMAChunk(entries: entries, filter: .other, filterName: "HELMET")
+
+    arma += "# END OF LINE\n"
 
     let armaURL = skseURL.appending(path: "zzLSARSetting_ARMA.ini")
     try arma.write(to: armaURL)
+  }
+
+  /// Get a chunk of ARMA entries filtered by category.
+  func filteredARMAChunk(
+    entries: [SortedARMAEntry], filter: ARMACategory, filterName: String
+  ) throws -> String {
+    var arma = ""
+    var done = Set<String>()
+
+    arma +=
+      "#DO_NOT_EDIT_THIS_LINE:\(filterName)-----------------------------------------------\t\t\t\t\t\t\t\t\t\t\n"
+
+    for (name, settings, entry, mode, _) in entries {
+      let variant = "\(mode)\(name)"
+      if !done.contains(variant) {
+        done.insert(variant)
+        if let options = settings.options, entry.category == filter {
+          arma += "\(name)\t"
+          arma += "\(String(format: "%08X", entry.formID))\t"
+          arma += "\(entry.category.letterCode)\t"
+          arma += "\(mode)\t"
+          arma += options.skirt ? "1\t" : "0\t"
+          arma += options.panty ? "1\t" : "0\t"
+          arma += options.bra ? "1\t" : "0\t"
+          arma += options.greaves ? "1\t" : "0\t"
+          arma += "\(entry.priority)\t"
+          arma += "\(entry.dlc)\t"
+          arma += "\(entry.editorID)\n"
+        }
+      }
+    }
+
+    return arma
   }
 
   func extractARMOData() throws -> [String: ARMOEntry] {
