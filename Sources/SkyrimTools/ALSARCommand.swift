@@ -311,54 +311,62 @@ struct AlsarCommand: LoggableCommand, GameCommand {
 
     let looseKeys = Set(looseArmas.keys)
     let fittedKeys = Set(fittedArmas.keys)
-    let mismatchedKeys = looseKeys.symmetricDifference(fittedKeys)
-    if mismatchedKeys.count > 0 {
-      for key in mismatchedKeys {
-        log("Warning: ARMA \(key) has only loose or fitted entry, not both.")
-      }
-    }
-
-    let commonKeys = looseKeys.intersection(fittedKeys)
+    let combinedKeys = looseKeys.union(fittedKeys)
     var pairs: [String: ARMAPair] = [:]
-    for key in commonKeys {
-      if let loose = looseArmas[key], let fitted = fittedArmas[key] {
-        if loose.dlc != fitted.dlc {
-          log("Warning: DLC mismatch between loose and fitted ARMA for \(key)")
-        }
-        if loose.category != fitted.category {
-          log("Warning: Category mismatch between loose and fitted ARMA for \(key)")
-        }
-        if loose.priority != fitted.priority {
-          log("Warning: Priority mismatch between loose and fitted ARMA for \(key)")
-        }
-        if loose.options.skirt != fitted.options.skirt
-          || loose.options.panty != fitted.options.panty || loose.options.bra != fitted.options.bra
-          || loose.options.greaves != fitted.options.greaves
-        {
-          log("Warning: Options mismatch between loose and fitted ARMA for \(key)")
+    for key in combinedKeys {
+      let loose = looseArmas[key]
+      let fitted = fittedArmas[key]
+      checkForMismatches(loose: loose, fitted: fitted, key: key)
+
+      if let common = loose ?? fitted {
+        let looseCompact = loose.map {
+          ARMACompact(formID: $0.formID, editorID: $0.editorID)
         }
 
-        let looseCompact = ARMACompact(
-          formID: loose.formID,
-          editorID: loose.editorID
-        )
-        let fittedCompact = ARMACompact(
-          formID: fitted.formID,
-          editorID: fitted.editorID
-        )
+        let fittedCompact = fitted.map {
+          ARMACompact(formID: $0.formID, editorID: $0.editorID)
+        }
 
         pairs[key] = ARMAPair(
-          category: loose.category,
-          dlc: loose.dlc,
-          priority: loose.priority,
+          category: common.category,
+          dlc: common.dlc,
+          priority: common.priority,
           loose: looseCompact,
           fitted: fittedCompact,
-          options: loose.options
+          options: common.options
         )
       }
     }
+
     return pairs
   }
+
+  func checkForMismatches(
+    loose: ARMAEntry?, fitted: ARMAEntry?, key: String
+  ) {
+    if let loose, let fitted {
+      if loose.dlc != fitted.dlc {
+        log("Warning: DLC mismatch between loose and fitted ARMA for \(key)")
+      }
+      if loose.category != fitted.category {
+        log("Warning: Category mismatch between loose and fitted ARMA for \(key)")
+      }
+      if loose.priority != fitted.priority {
+        log("Warning: Priority mismatch between loose and fitted ARMA for \(key)")
+      }
+      if loose.options.skirt != fitted.options.skirt
+        || loose.options.panty != fitted.options.panty || loose.options.bra != fitted.options.bra
+        || loose.options.greaves != fitted.options.greaves
+      {
+        log("Warning: Options mismatch between loose and fitted ARMA for \(key)")
+      }
+    } else if loose != nil {
+      log("Warning: Only loose ARMA present for \(key)")
+    } else if fitted != nil {
+      log("Warning: Only fitted ARMA present for \(key)")
+    }
+  }
+
 }
 
 /// Configuration file.
@@ -432,7 +440,7 @@ enum ARMACategory: String, Codable {
 /// Pair of loose and fitted ARMA entries.
 class ARMAPair: Codable {
   internal init(
-    category: ARMACategory, dlc: Int, priority: Int, loose: ARMACompact, fitted: ARMACompact,
+    category: ARMACategory, dlc: Int, priority: Int, loose: ARMACompact?, fitted: ARMACompact?,
     options: ARMAOptions? = nil
   ) {
     self.category = category
