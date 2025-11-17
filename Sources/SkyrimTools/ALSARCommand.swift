@@ -127,7 +127,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
 
     for (name, pair) in source.mapping {
       let category = pair.category
-      let options = config.options[name] ?? ARMAOptions()
+      let options = config.options[name] ?? ((category == .other) ? .none : .all)
 
       if let loose = pair.loose {
         let looseEntry = ARMAEntry(
@@ -525,10 +525,6 @@ struct ARMAOptions: Codable {
     self.greaves = greaves
   }
 
-  init() {
-    self.skirt = true
-    self.panty = true
-    self.bra = true
-    self.greaves = true
-  }
+  static let none = ARMAOptions(skirt: false, panty: false, bra: false, greaves: false)
+  static let all = ARMAOptions(skirt: true, panty: true, bra: true, greaves: true)
 }
