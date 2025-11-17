@@ -33,6 +33,7 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     log("Done.")
   }
 
+  /// Generate ALSAR settings from a config file.
   func generateSettings(configURL: URL) throws {
     log("Generating ALSAR settings...")
 
@@ -41,32 +42,10 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     let config = try decoder.decode(ARMOConfig.self, from: data)
 
     let entries = sortedEntries(config: config)
-
-    for (name, settings, armour) in entries {
-      if settings.mode != .off {
-        let hexForm = String(format: "%08X", armour.formID)
-        print(
-          "\(hexForm)\t\(settings.mode.configChar)\t\(armour.dlc)\t\(armour.arma)\t\(name)"
-        )
-      }
-    }
+    try writeARMOSettings(entries: entries)
   }
 
-  func sortedEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMOEntry)] {
-    return config.modes.compactMap { name, settings in
-      if let armour = config.source.armour[name] {
-        switch settings.mode {
-        case .off: return nil
-        default:
-          return (name, settings, armour)
-        }
-      } else {
-        log("Warning: No ARMA mapping found for armour piece \(name) in config modes.")
-        return nil
-      }
-    }.sorted { $0.2.formID < $1.2.formID }
-  }
-
+  /// Extract initial settings from the ALSAR ini files and write out a config file.
   func pullSettings(configURL: URL) throws {
     log("Extracting ALSAR settings...")
     var armos = try extractARMOData()
@@ -108,6 +87,34 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     let data = try encoder.encode(config)
     try data.write(to: configURL)
     log("Wrote ALSAR config to \(configURL.path)")
+  }
+
+  /// Get sorted list of enabled armour entries.
+  func sortedEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMOEntry)] {
+    return config.modes.compactMap { name, settings in
+      if let armour = config.source.armour[name] {
+        return (name, settings, armour)
+      } else {
+        log("Warning: No ARMA mapping found for armour piece \(name) in config modes.")
+        return nil
+      }
+    }.sorted { $0.2.formID < $1.2.formID }
+  }
+
+  /// Write out the ARMO settings file.
+  func writeARMOSettings(entries: [(String, ARMOSettings, ARMOEntry)]) throws {
+    var armo = "ArmoFormID\tWorL\tDLC\tARMA_NAME\tARMO_NAME\n"
+
+    for (name, settings, armour) in entries {
+      if settings.mode == .off {
+        armo += "# "
+      }
+      let hexForm = String(format: "%08X", armour.formID)
+      armo += "\(hexForm)\t\(settings.mode.configChar)\t\(armour.dlc)\t\(armour.arma)\t\(name)\n"
+    }
+
+    let armoURL = skseURL.appending(path: "zzLSARSetting_ARMO.ini")
+    try armo.write(to: armoURL)
   }
 
   func extractARMOData() throws -> [String: ARMOEntry] {
