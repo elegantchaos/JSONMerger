@@ -40,13 +40,18 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     log("Generating ALSAR settings...")
 
     let decoder = JSONDecoder()
-    let data = try Data(contentsOf: configURL)
-    let config = try decoder.decode(ARMOConfig.self, from: data)
+    let configFileURL = configURL.appendingPathExtension("config.json")
+    let config = try decoder.decode(
+      ARMOConfig.self, from: try Data(contentsOf: configFileURL))
 
-    let armoEntries = sortedARMOEntries(config: config)
+    let sourceFileURL = configURL.appendingPathExtension("source.json")
+    let source = try decoder.decode(
+      ARMOSource.self, from: try Data(contentsOf: sourceFileURL))
+
+    let armoEntries = sortedARMOEntries(config: config, source: source)
     try writeARMOSettings(entries: armoEntries)
 
-    let armaEntries = sortedARMAEntries(config: config)
+    let armaEntries = sortedARMAEntries(config: config, source: source)
     try writeARMASettings(entries: armaEntries)
   }
 
@@ -55,28 +60,27 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     log("Extracting ALSAR settings...")
     var armos = try extractARMOData()
     let armas = try extractARMAData()
-    var settings: [String: ARMOSettings] = [:]
+
+    var modes: [String: ARMOMode] = [:]
+    var settings: [String: ARMAOptions] = [:]
 
     for (name, armo) in armos {
+      if let mode = armo.mode {
+        modes[name] = mode
+      } else {
+        log("Warning: Missing mode for ARMO \(name)")
+      }
+
       if let pair = armas[armo.arma] {
-        if let mode = armo.mode, let options = pair.options {
-          let setting = ARMOSettings(
-            mode: mode,
-            options: options
-          )
-          settings[name] = setting
+        if let options = pair.options {
+          settings[armo.arma] = options
         } else {
-          log("Warning: Missing mode or options for ARMO \(name)")
+          log("Warning: Missing options for ARMA \(armo.arma) referenced by ARMO \(name)")
         }
 
         armo.category = pair.category
       } else {
         log("Warning: No ARMA found for \(armo.arma) referenced by ARMO \(name)")
-        let setting = ARMOSettings(
-          mode: armo.mode ?? .off,
-          options: nil
-        )
-        settings[name] = setting
       }
 
       armos[name] = armo
@@ -88,22 +92,25 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     }
 
     let config = ARMOConfig(
-      modes: settings,
-      source: ARMOSource(armour: armos, mapping: armas)
+      modes: modes,
+      options: settings,
     )
+
+    let source = ARMOSource(armour: armos, mapping: armas)
 
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    let data = try encoder.encode(config)
-    try data.write(to: configURL)
-    log("Wrote ALSAR config to \(configURL.path)")
+    try encoder.encode(config).write(to: configURL.appendingPathExtension("config.json"))
+    try encoder.encode(source).write(to: configURL.appendingPathExtension("source.json"))
+    log("Wrote ALSAR config and source to \(configURL.path)")
   }
 
   /// Get sorted list of enabled armour entries.
-  func sortedARMOEntries(config: ARMOConfig) -> [(String, ARMOSettings, ARMOEntry)] {
-    return config.modes.compactMap { name, settings in
-      if let armour = config.source.armour[name] {
-        return (name, settings, armour)
+  func sortedARMOEntries(config: ARMOConfig, source: ARMOSource) -> [(String, ARMOMode, ARMOEntry)]
+  {
+    return config.modes.compactMap { name, mode in
+      if let armour = source.armour[name] {
+        return (name, mode, armour)
       } else {
         log("Warning: No ARMA mapping found for armour piece \(name) in config modes.")
         return nil
@@ -111,46 +118,40 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     }.sorted { $0.2.formID < $1.2.formID }
   }
 
-  typealias SortedARMAEntry = (String, ARMOSettings, ARMAEntry, String, String)
+  typealias SortedARMAEntry = (String, ARMAOptions, ARMAEntry, String, String)
 
   /// Sorted list of ARMA entries for all armour pieces.
   /// Entries are sorted by mode (L before W) then by ARMA name.
   /// (this is approximately the order in the original ALSAR ini file)
-  func sortedARMAEntries(config: ARMOConfig) -> [SortedARMAEntry] {
+  func sortedARMAEntries(config: ARMOConfig, source: ARMOSource) -> [SortedARMAEntry] {
     var entries: [SortedARMAEntry] = []
 
-    for (name, armour) in config.source.armour {
-      if let settings = config.modes[name],
-        let category = armour.category
-      {
-        let options =
-          settings.options
-          ?? ARMAOptions(
-            skirt: true,
-            panty: true,
-            bra: true,
-            greaves: true
-          )
-        if let pair = config.source.mapping[armour.arma] {
+    for (name, pair) in source.mapping {
+      if let category = pair.category {
+        let options = config.options[name] ?? ARMAOptions()
+
+        if let loose = pair.loose {
           let looseEntry = ARMAEntry(
             category: category,
-            formID: pair.loose.formID,
+            formID: loose.formID,
             options: options,
             priority: pair.priority,
             dlc: pair.dlc,
-            editorID: pair.loose.editorID
+            editorID: loose.editorID
           )
-          entries.append((armour.arma, settings, looseEntry, "L", name))
+          entries.append((name, options, looseEntry, "L", name))
+        }
 
+        if let fitted = pair.fitted {
           let fittedEntry = ARMAEntry(
             category: category,
-            formID: pair.fitted.formID,
+            formID: fitted.formID,
             options: options,
             priority: pair.priority,
             dlc: pair.dlc,
-            editorID: pair.fitted.editorID
+            editorID: fitted.editorID
           )
-          entries.append((armour.arma, settings, fittedEntry, "W", name))
+          entries.append((name, options, fittedEntry, "W", name))
         }
       }
     }
@@ -163,15 +164,15 @@ struct AlsarCommand: LoggableCommand, GameCommand {
   }
 
   /// Write out the ARMO settings file.
-  func writeARMOSettings(entries: [(String, ARMOSettings, ARMOEntry)]) throws {
+  func writeARMOSettings(entries: [(String, ARMOMode, ARMOEntry)]) throws {
     var armo = "ArmoFormID\tWorL\tDLC\tARMA_NAME\tARMO_NAME\n"
 
-    for (name, settings, armour) in entries {
-      if settings.mode == .off {
+    for (name, mode, armour) in entries {
+      if mode == .off {
         armo += "# "
       }
       let hexForm = String(format: "%08X", armour.formID)
-      armo += "\(hexForm)\t\(settings.mode.configChar)\t\(armour.dlc)\t\(armour.arma)\t\(name)\n"
+      armo += "\(hexForm)\t\(mode.configChar)\t\(armour.dlc)\t\(armour.arma)\t\(name)\n"
     }
 
     let armoURL = skseURL.appending(path: "zzLSARSetting_ARMO.ini")
@@ -215,11 +216,11 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     arma +=
       "#DO_NOT_EDIT_THIS_LINE:\(filterName)-----------------------------------------------\t\t\t\t\t\t\t\t\t\t\n"
 
-    for (name, settings, entry, mode, _) in entries {
+    for (name, options, entry, mode, _) in entries {
       let variant = "\(mode)\(name)"
       if !done.contains(variant) {
         done.insert(variant)
-        if let options = settings.options, entry.category == filter {
+        if entry.category == filter {
           arma += "\(name)\t"
           arma += "\(String(format: "%08X", entry.formID))\t"
           arma += "\(entry.category.letterCode)\t"
@@ -363,10 +364,10 @@ struct AlsarCommand: LoggableCommand, GameCommand {
 /// Configuration file.
 struct ARMOConfig: Codable {
   /// Modes for each armour piece.
-  let modes: [String: ARMOSettings]
+  let modes: [String: ARMOMode]
 
-  /// Armour source data from the original mod.
-  let source: ARMOSource
+  /// Options for each armour piece.
+  let options: [String: ARMAOptions]
 }
 
 /// Source data for armour pieces.
@@ -445,15 +446,9 @@ class ARMAPair: Codable {
   var category: ARMACategory?
   let dlc: Int
   let priority: Int
-  let loose: ARMACompact
-  let fitted: ARMACompact
+  let loose: ARMACompact?
+  let fitted: ARMACompact?
   var options: ARMAOptions?
-}
-
-/// Settings for an armour piece.
-struct ARMOSettings: Codable {
-  let mode: ARMOMode
-  let options: ARMAOptions?
 }
 
 /// Mode for an armour piece.
@@ -515,4 +510,18 @@ struct ARMAOptions: Codable {
   let panty: Bool
   let bra: Bool
   let greaves: Bool
+
+  init(skirt: Bool = true, panty: Bool = true, bra: Bool = true, greaves: Bool = true) {
+    self.skirt = skirt
+    self.panty = panty
+    self.bra = bra
+    self.greaves = greaves
+  }
+
+  init() {
+    self.skirt = true
+    self.panty = true
+    self.bra = true
+    self.greaves = true
+  }
 }
