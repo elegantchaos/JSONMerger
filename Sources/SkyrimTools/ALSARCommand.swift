@@ -87,7 +87,6 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     }
 
     for (_, pair) in armas {
-      pair.category = nil
       pair.options = nil
     }
 
@@ -127,33 +126,33 @@ struct AlsarCommand: LoggableCommand, GameCommand {
     var entries: [SortedARMAEntry] = []
 
     for (name, pair) in source.mapping {
-      if let category = pair.category {
-        let options = config.options[name] ?? ARMAOptions()
+      let category = pair.category
+      let options = config.options[name] ?? ARMAOptions()
 
-        if let loose = pair.loose {
-          let looseEntry = ARMAEntry(
-            category: category,
-            formID: loose.formID,
-            options: options,
-            priority: pair.priority,
-            dlc: pair.dlc,
-            editorID: loose.editorID
-          )
-          entries.append((name, options, looseEntry, "L", name))
-        }
-
-        if let fitted = pair.fitted {
-          let fittedEntry = ARMAEntry(
-            category: category,
-            formID: fitted.formID,
-            options: options,
-            priority: pair.priority,
-            dlc: pair.dlc,
-            editorID: fitted.editorID
-          )
-          entries.append((name, options, fittedEntry, "W", name))
-        }
+      if let loose = pair.loose {
+        let looseEntry = ARMAEntry(
+          category: category,
+          formID: loose.formID,
+          options: options,
+          priority: pair.priority,
+          dlc: pair.dlc,
+          editorID: loose.editorID
+        )
+        entries.append((name, options, looseEntry, "L", name))
       }
+
+      if let fitted = pair.fitted {
+        let fittedEntry = ARMAEntry(
+          category: category,
+          formID: fitted.formID,
+          options: options,
+          priority: pair.priority,
+          dlc: pair.dlc,
+          editorID: fitted.editorID
+        )
+        entries.append((name, options, fittedEntry, "W", name))
+      }
+
     }
 
     return entries.sorted { (e1: SortedARMAEntry, e2: SortedARMAEntry) in
@@ -451,7 +450,7 @@ class ARMAPair: Codable {
     self.options = options
   }
 
-  var category: ARMACategory?
+  let category: ARMACategory
   let dlc: Int
   let priority: Int
   let loose: ARMACompact?
