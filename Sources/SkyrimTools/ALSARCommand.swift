@@ -119,10 +119,18 @@ struct AlsarCommand: LoggableCommand, GameCommand {
   func sortedARMAEntries(config: ARMOConfig) -> [SortedARMAEntry] {
     var entries: [SortedARMAEntry] = []
 
-    for (name, settings) in config.modes {
-      if let armour = config.source.armour[name], let options = settings.options,
+    for (name, armour) in config.source.armour {
+      if let settings = config.modes[name],
         let category = armour.category
       {
+        let options =
+          settings.options
+          ?? ARMAOptions(
+            skirt: true,
+            panty: true,
+            bra: true,
+            greaves: true
+          )
         if let pair = config.source.mapping[armour.arma] {
           let looseEntry = ARMAEntry(
             category: category,
